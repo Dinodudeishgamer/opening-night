@@ -1,0 +1,10 @@
+# GitHub Pages: serves this folder as the app's public site (the privacy
+# policy and support page the App Store links to). The other files here are
+# the project's own documentation and are excluded from the site.
+title: Opening Night
+description: A private movie-night app for one group of friends.
+theme: jekyll-theme-cayman
+exclude:
+  - architecture.md
+  - operations.md
+  - launch-checklist.md
