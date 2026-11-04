@@ -237,6 +237,10 @@ export default function YouScreen() {
         Opening Night {Constants.expoConfig?.version ?? ''}
         {Updates.updateId ? ` · ${Updates.updateId.slice(0, 8)}` : ''}
       </ThemedText>
+      {/* TMDB's terms ask every app built on its API to say so. */}
+      <ThemedText type="small" themeColor="textSecondary" style={styles.credit}>
+        Movie details, posters and trailers from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.
+      </ThemedText>
 
       <Sheet visible={editing} title="Your picture" onClose={() => setEditing(false)}>
         <AvatarPicker onPicked={() => setEditing(false)} />
@@ -280,4 +284,5 @@ const styles = StyleSheet.create({
   scoreChipText: { fontFamily: Font.extrabold, fontSize: 13, lineHeight: 18 },
 
   version: { textAlign: 'center', marginTop: Spacing.two },
+  credit: { textAlign: 'center', fontSize: 11, lineHeight: 16, opacity: 0.8 },
 });
