@@ -6,7 +6,7 @@ import { test } from 'node:test';
 
 import { dayTime, firstEmoji, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, timeUntil, tmdbImage, formatLabel } from '../format.ts';
 import { inboxShows } from '../inbox.ts';
-import { appleCashLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
+import { ANDROID_INSTALL_LINK, appleCashLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
 import { confirmationOpen, isPast, ownerNextStep, rsvpOpen, stageOf } from '../stage.ts';
 import { eventStats, summarize, tiedNames, verdict } from '../stats.ts';
 
@@ -239,6 +239,10 @@ test('the invite message walks someone from no app to signed in', () => {
   assert.match(text, /expires in 48 hours/);
   assert.match(inviteMessage('Tad W.', 'ABCD-EFGH-JKLM-NPQR', false), /expires in 14 days/);
   assert.ok(inviteMessage('', 'x', false).startsWith('Hey there!'));
+  // Android: the download link instead of TestFlight, then the same code.
+  const android = inviteMessage('Tad W.', 'KMTAHCWBPRDGFNEJ', false, 'android');
+  assert.ok(android.includes(ANDROID_INSTALL_LINK) && !android.includes('TestFlight'));
+  assert.ok(android.indexOf(ANDROID_INSTALL_LINK) < android.indexOf('\nKMTAHCWBPRDGFNEJ\n'));
 });
 
 test('calendar entry: runs past the credits, and says where and what', () => {

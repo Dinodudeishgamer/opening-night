@@ -17,24 +17,38 @@ function eventLink(eventId: string): string {
 export const INSTALL_LINK = 'https://testflight.apple.com/join/VrWFmrGv';
 
 /**
- * The message Dino sends with an invite code: the four steps from "you do
- * not have the app" to "you are in", in order, and short enough to be read.
- * `name` is "Gavin G."; only the first name is used.
+ * The Android app, downloaded and installed straight from Expo (there is no
+ * Play Store listing). Points at one particular build: a new Android build
+ * means a new address here.
  */
-export function inviteMessage(name: string, code: string, custom: boolean): string {
+export const ANDROID_INSTALL_LINK = 'https://expo.dev/artifacts/eas/50CDA5BPY7XqyM8_acmISTdr22vKTvxZvHiwjgdHh-4.apk';
+
+/**
+ * The message Dino sends with an invite code: the steps from "you do not
+ * have the app" to "you are in", in order, and short enough to be read.
+ * iPhones install through TestFlight; Android phones download the app
+ * directly. `name` is "Gavin G."; only the first name is used.
+ */
+export function inviteMessage(name: string, code: string, custom: boolean, phone: 'iphone' | 'android' = 'iphone'): string {
   const first = name.trim().split(/\s+/)[0] || 'there';
+  const install =
+    phone === 'android'
+      ? [
+          `1. On your Android phone, tap this link to download the app: ${ANDROID_INSTALL_LINK}`,
+          '2. Open the downloaded file. If your phone asks, allow your browser to install apps, then tap Install. (It is not on the Play Store yet, so this is normal.)',
+        ]
+      : ['1. Install the free TestFlight app from the App Store (it is by Apple).', `2. Tap this link, then Accept and Install: ${INSTALL_LINK}`];
   return [
     `Hey ${first}! You're invited to Opening Night, our movie club app. It takes 2 minutes. In order:`,
     '',
-    '1. Install the free TestFlight app from the App Store (it is by Apple).',
-    `2. Tap this link, then Accept and Install: ${INSTALL_LINK}`,
+    ...install,
     '3. Open Opening Night and enter your invite code:',
     '',
     code,
     '',
     '4. Say yes to notifications so you hear about movie nights.',
     '',
-    `The code works once and expires in ${custom ? '48 hours' : '14 days'}. iPhone only for now. Stuck? Text me.`,
+    `The code works once and expires in ${custom ? '48 hours' : '14 days'}. Stuck? Text me.`,
   ].join('\n');
 }
 

@@ -475,7 +475,8 @@ function PersonSheet({ ctx, person, onClose }: { ctx: EventCtx; person: Person |
         <ThemedText selectable style={styles.code}>
           {issued.code}
         </ThemedText>
-        <Button title="Share the invite" icon="share-outline" onPress={() => void shareText(inviteMessage(issued.name, issued.code, issued.custom))} />
+        <Button title="Share for iPhone" icon="logo-apple" onPress={() => void shareText(inviteMessage(issued.name, issued.code, issued.custom, 'iphone'))} />
+        <Button title="Share for Android" icon="logo-android" variant="secondary" onPress={() => void shareText(inviteMessage(issued.name, issued.code, issued.custom, 'android'))} />
         <Button title="Done" variant="secondary" onPress={() => setIssued(null)} />
       </Sheet>
     );

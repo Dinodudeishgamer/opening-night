@@ -170,17 +170,21 @@ export default function ManageScreen() {
 
       <Sheet visible={issued !== null} title={`Invite for ${issued?.name ?? ''}`} onClose={() => setIssued(null)}>
         <ThemedText themeColor="textSecondary">
-          Send this to {issued?.name} privately. Share the invite sends the code with step-by-step instructions for installing the app. The code works once, expires in {issued?.custom ? '48 hours' : '14 days'}, and is shown only now.
+          Send this to {issued?.name} privately. Share it for the kind of phone they have: the message has their code and how to install the app on it. The code works once, expires in {issued?.custom ? '48 hours' : '14 days'}, and is shown only now.
         </ThemedText>
         <ThemedText selectable style={styles.code}>
           {issued?.code}
         </ThemedText>
         <Button
-          title="Share the invite"
-          icon="share-outline"
-          onPress={() =>
-            void shareText(inviteMessage(issued?.name ?? '', issued?.code ?? '', issued?.custom ?? false))
-          }
+          title="Share for iPhone"
+          icon="logo-apple"
+          onPress={() => void shareText(inviteMessage(issued?.name ?? '', issued?.code ?? '', issued?.custom ?? false, 'iphone'))}
+        />
+        <Button
+          title="Share for Android"
+          icon="logo-android"
+          variant="secondary"
+          onPress={() => void shareText(inviteMessage(issued?.name ?? '', issued?.code ?? '', issued?.custom ?? false, 'android'))}
         />
         <Button title="Done" variant="secondary" onPress={() => setIssued(null)} />
       </Sheet>
