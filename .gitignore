@@ -40,3 +40,6 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Firebase settings for Android: kept out of the public repo, given to EAS builds as a file variable.
+google-services.json
