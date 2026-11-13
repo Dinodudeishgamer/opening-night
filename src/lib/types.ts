@@ -15,6 +15,8 @@ export interface Member {
   avatar_kind: AvatarKind;
   avatar_emoji: string | null;
   avatar_path: string | null;
+  /** Their Letterboxd username, if they linked it. */
+  letterboxd: string | null;
 }
 
 export interface Movie {

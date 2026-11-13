@@ -12,12 +12,13 @@ import * as Notifications from 'expo-notifications';
 import { type Href, Stack, useRouter, useSegments } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
 
 import { SplashOverlay } from '@/components/splash-overlay';
 import { useIntroSeen } from '@/lib/intro';
 import { eventIdOf } from '@/lib/push';
+import { openNewestVersion } from '@/lib/updates';
 import { SessionProvider, useSession } from '@/lib/session';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
 
@@ -73,6 +74,7 @@ function RootNavigation() {
       <Stack.Screen name="event/[id]" />
       <Stack.Screen name="check-in/[id]" />
       <Stack.Screen name="new-event" />
+      <Stack.Screen name="member/[id]" />
     </Stack>
   );
 }
@@ -103,6 +105,11 @@ function ThemedApp() {
 }
 
 export default function RootLayout() {
+  // The splash stays up while the app makes sure it is the newest version.
+  const [current, setCurrent] = useState(false);
+  useEffect(() => {
+    void openNewestVersion().finally(() => setCurrent(true));
+  }, []);
   const [fontsLoaded, fontError] = useFonts({
     Inter_400Regular,
     Inter_500Medium,
@@ -114,7 +121,7 @@ export default function RootLayout() {
 
   // Keep the native splash up until fonts resolve; on a font error we still
   // render (falling back to system fonts) rather than trapping the user.
-  if (!fontsLoaded && !fontError) return null;
+  if ((!fontsLoaded && !fontError) || !current) return null;
 
   return (
     <ThemePreferenceProvider>

@@ -12,6 +12,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { eventTitle } from '@/components/event-card';
+import { ClubList } from '@/components/club-list';
 import { StatsGuide } from '@/components/stats-guide';
 import { ThemedText } from '@/components/themed-text';
 import { EmptyState } from '@/components/ui/empty-state';
@@ -19,16 +20,19 @@ import { Poster } from '@/components/ui/poster';
 import { RefreshScreen } from '@/components/ui/refresh-screen';
 import { Font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { listEvents, listParticipants, listSelectedShowtimes, listVisibleRatings } from '@/lib/api';
+import { listEvents, listParticipants, listSelectedShowtimes, listVisibleRatings, loadClub } from '@/lib/api';
 import { DATE_LOCALE, score } from '@/lib/format';
 import { haptic } from '@/lib/haptics';
+import { useSession } from '@/lib/session';
 import { isPast } from '@/lib/stage';
+import { memberTotals, type MemberTotals } from '@/lib/stats';
 import type { EventRow, Showtime } from '@/lib/types';
 
 const COLUMNS = 3;
 const GAP = Spacing.two + 4;
 
 type Layout = 'wall' | 'list';
+type View_ = 'movies' | 'club';
 const LAYOUT_KEY = 'opening-night.past-layout';
 
 export default function PastScreen() {
@@ -41,6 +45,9 @@ export default function PastScreen() {
   const [failed, setFailed] = useState(false);
   const [crowds, setCrowds] = useState<Record<string, number>>({});
   const [layout, setLayout] = useState<Layout>('wall');
+  const [showing, setShowing] = useState<View_>('movies');
+  const [club, setClub] = useState<Record<string, MemberTotals>>({});
+  const { members } = useSession();
 
   useEffect(() => {
     AsyncStorage.getItem(LAYOUT_KEY)
@@ -61,6 +68,10 @@ export default function PastScreen() {
     try {
       const ended = (await listEvents()).filter((event) => event.ended_at);
       const [selected, ratings] = await Promise.all([listSelectedShowtimes(ended), listVisibleRatings()]);
+      // The Club side's numbers. The page stands without them.
+      loadClub()
+        .then((data) => setClub(memberTotals(data.participants, data.predictions, data.ratings)))
+        .catch(() => {});
       // How many went, for the list. The page stands without it.
       listParticipants(ended.map((event) => event.id))
         .then((byEvent) => setCrowds(Object.fromEntries(Object.entries(byEvent).map(([id, people]) => [id, people.filter((person) => person.checked_in_at).length]))))
@@ -97,9 +108,9 @@ export default function PastScreen() {
     <RefreshScreen onRefresh={load}>
       <View style={styles.header}>
         <ThemedText type="heading" style={styles.fill}>
-          Past Movies
+          {showing === 'club' ? 'The Club' : 'Past Movies'}
         </ThemedText>
-        {events && events.length > 0 && (
+        {showing === 'movies' && events && events.length > 0 && (
           <View style={[styles.switch, { borderColor: theme.border }]} accessibilityRole="tablist">
             {(['wall', 'list'] as const).map((option) => {
               const on = layout === option;
@@ -119,6 +130,29 @@ export default function PastScreen() {
           </View>
         )}
       </View>
+      <View style={[styles.tabs, { borderColor: theme.border }]} accessibilityRole="tablist">
+        {(['movies', 'club'] as const).map((option) => {
+          const on = showing === option;
+          return (
+            <Pressable
+              key={option}
+              onPress={() => {
+                if (!on) haptic.tap();
+                setShowing(option);
+              }}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              style={[styles.tab, on && { backgroundColor: theme.accent }]}>
+              <ThemedText style={[styles.tabText, { color: on ? theme.onAccent : theme.textSecondary }]}>{option === 'movies' ? 'Movies' : 'Club'}</ThemedText>
+            </Pressable>
+          );
+        })}
+      </View>
+
+      {showing === 'club' ? (
+        <ClubList members={members.filter((member) => member.status === 'active')} totals={club} />
+      ) : (
+      <>
       {events && events.length > 0 && (
         <View style={[styles.totals, { borderColor: theme.border }]}>
           <Total value={String(events.length)} label={events.length === 1 ? 'Film' : 'Films'} />
@@ -209,6 +243,8 @@ export default function PastScreen() {
           })}
         </View>
       )}
+      </>
+      )}
     </RefreshScreen>
   );
 }
@@ -227,6 +263,9 @@ function Total({ value, label }: { value: string; label: string }) {
 const styles = StyleSheet.create({
   fill: { flex: 1 },
   pressed: { opacity: 0.75 },
+  tabs: { flexDirection: 'row', borderWidth: 1, borderRadius: Radius.full, padding: 3, gap: 3 },
+  tab: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 7, borderRadius: Radius.full },
+  tabText: { fontFamily: Font.bold, fontSize: 14, lineHeight: 18 },
   header: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
   switch: { flexDirection: 'row', borderWidth: 1, borderRadius: Radius.full, padding: 3, gap: 2 },
   switchOption: { width: 38, height: 32, borderRadius: Radius.full, alignItems: 'center', justifyContent: 'center' },

@@ -15,7 +15,8 @@ import { MemberAvatar } from '@/components/member-avatar';
 import { StatsGuide } from '@/components/stats-guide';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
-import { Choices, Sheet } from '@/components/ui/kit';
+import { Choices, Sheet, useAction } from '@/components/ui/kit';
+import { TextField } from '@/components/ui/text-field';
 import { Poster } from '@/components/ui/poster';
 import { RefreshScreen } from '@/components/ui/refresh-screen';
 import { Section } from '@/components/ui/section';
@@ -25,6 +26,7 @@ import { actions, listEvents, messageOf, myScores } from '@/lib/api';
 import { confirmAction, showAlert } from '@/lib/dialogs';
 import { MAX_SCORE, memberName, score } from '@/lib/format';
 import { removeMyAvatarFiles } from '@/lib/images';
+import { letterboxdLink } from '@/lib/links';
 import { type PushState, pushState, registerThisDevice } from '@/lib/push';
 import { useSession } from '@/lib/session';
 import { THEME_OPTIONS, type ThemePreference, useThemePreference } from '@/lib/theme-preference';
@@ -52,6 +54,7 @@ export default function YouScreen() {
   const { preference, setPreference } = useThemePreference();
   const [totals, setTotals] = useState<Totals>(EMPTY);
   const [editing, setEditing] = useState(false);
+  const [linking, setLinking] = useState(false);
   const [push, setPush] = useState<PushState>('unsupported');
   const [asking, setAsking] = useState(false);
 
@@ -185,6 +188,28 @@ export default function YouScreen() {
         </Section>
       )}
 
+      <Section title="Letterboxd">
+        {member?.letterboxd ? (
+          <View style={styles.letterboxd}>
+            <Button
+              title={`letterboxd.com/${member.letterboxd}`}
+              icon="open-outline"
+              size="sm"
+              variant="secondary"
+              onPress={() => void Linking.openURL(letterboxdLink(member.letterboxd!)).catch(() => {})}
+            />
+            <Button title="Change" size="sm" variant="secondary" onPress={() => setLinking(true)} />
+          </View>
+        ) : (
+          <>
+            <ThemedText type="small" themeColor="textSecondary">
+              Link your Letterboxd and it shows on your profile in the Club, for everyone to follow.
+            </ThemedText>
+            <Button title="Link my Letterboxd" icon="link-outline" size="sm" variant="secondary" onPress={() => setLinking(true)} />
+          </>
+        )}
+      </Section>
+
       <Section title="Appearance">
         <Choices<ThemePreference> options={THEME_OPTIONS.map((option) => ({ value: option.value, label: option.label }))} value={preference} onChange={setPreference} />
       </Section>
@@ -242,10 +267,39 @@ export default function YouScreen() {
         Movie details, posters and trailers from TMDB. This product uses the TMDB API but is not endorsed or certified by TMDB.
       </ThemedText>
 
+      <LetterboxdSheet visible={linking} current={member?.letterboxd ?? null} onClose={() => setLinking(false)} />
+
       <Sheet visible={editing} title="Your picture" onClose={() => setEditing(false)}>
         <AvatarPicker onPicked={() => setEditing(false)} />
       </Sheet>
     </RefreshScreen>
+  );
+}
+
+/** Type or paste a Letterboxd username, or a profile address; empty unlinks. */
+function LetterboxdSheet({ visible, current, onClose }: { visible: boolean; current: string | null; onClose: () => void }) {
+  const { refresh } = useSession();
+  const { busy, run } = useAction(refresh);
+  const [typed, setTyped] = useState('');
+  const save = async (value: string) => {
+    if (await run('save', () => actions.setMyLetterboxd(value))) onClose();
+  };
+  return (
+    <Sheet visible={visible} title="Your Letterboxd" onClose={onClose}>
+      <TextField
+        label="Username or profile link"
+        defaultValue={current ?? ''}
+        onChangeText={setTyped}
+        placeholder="letterboxd.com/yourname"
+        autoCapitalize="none"
+        autoCorrect={false}
+        spellCheck={false}
+        keyboardType="url"
+        hint="It is the name at the end of your profile address. Pasting the whole address works too."
+      />
+      <Button title="Save" loading={busy === 'save'} onPress={() => void save(typed || current || '')} />
+      {current ? <Button title="Unlink" variant="destructiveOutline" loading={busy === 'unlink'} onPress={() => void run('unlink', () => actions.setMyLetterboxd('')).then((done) => done && onClose())} /> : null}
+    </Sheet>
   );
 }
 
@@ -284,5 +338,6 @@ const styles = StyleSheet.create({
   scoreChipText: { fontFamily: Font.extrabold, fontSize: 13, lineHeight: 18 },
 
   version: { textAlign: 'center', marginTop: Spacing.two },
+  letterboxd: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
   credit: { textAlign: 'center', fontSize: 11, lineHeight: 16, opacity: 0.8 },
 });

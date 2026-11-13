@@ -116,6 +116,51 @@ export function eventStats(
   };
 }
 
+export interface MemberTotals {
+  /** Nights they were checked in at. */
+  nights: number;
+  averageRating: number | null;
+  /** How close their guesses land to their own ratings, 0-100. */
+  accuracy: number | null;
+  rated: { eventId: string; rating: number }[];
+}
+
+/**
+ * Every member's totals from the nights they were at: what the Club page and
+ * a member's profile show. Guests are left out (they have no profile), and
+ * so is anything the caller cannot see yet.
+ */
+export function memberTotals(
+  attended: { id: string; event_id: string; member_id: string | null; checked_in_at: string | null }[],
+  predictions: { participant_id: string; score: number }[],
+  ratings: { participant_id: string; score: number }[],
+): Record<string, MemberTotals> {
+  const guessed = new Map(predictions.map((row) => [row.participant_id, Number(row.score)]));
+  const rated = new Map(ratings.map((row) => [row.participant_id, Number(row.score)]));
+  const out: Record<string, MemberTotals & { misses: number[]; sum: number }> = {};
+  for (const place of attended) {
+    if (!place.member_id || !place.checked_in_at) continue;
+    const totals = (out[place.member_id] ??= { nights: 0, averageRating: null, accuracy: null, rated: [], misses: [], sum: 0 });
+    totals.nights += 1;
+    if (rated.has(place.id)) {
+      const rating = rated.get(place.id)!;
+      totals.rated.push({ eventId: place.event_id, rating });
+      totals.sum += rating;
+      if (guessed.has(place.id)) totals.misses.push(Math.abs(rating - guessed.get(place.id)!));
+    }
+  }
+  return Object.fromEntries(
+    Object.entries(out).map(([id, { misses, sum, ...totals }]) => [
+      id,
+      {
+        ...totals,
+        averageRating: totals.rated.length ? round2(sum / totals.rated.length) : null,
+        accuracy: misses.length ? Math.round((1 - misses.reduce((a, b) => a + b, 0) / misses.length / SCALE) * 100) : null,
+      },
+    ]),
+  );
+}
+
 /**
  * The people who share a stat, as words: "Bob B.", "Bob B. & Carol C.",
  * "Bob B., Carol C. & Dino W.", and past three, "5 people tied". `firstOnly`

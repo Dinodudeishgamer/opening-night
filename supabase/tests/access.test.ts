@@ -228,6 +228,22 @@ test('removing a member who was never on a movie night deletes them completely',
     assert.equal(await t.val('postgres', `select status from public.members where id = $1`, [alice.id]), 'deactivated');
   }));
 
+test('a member links their own Letterboxd, by name or by profile address', () =>
+  inTx(pg, async (t) => {
+    const { alice, bob } = await club(t);
+    for (const typed of ['alicewatches', '@alicewatches', 'https://letterboxd.com/alicewatches/films/', 'letterboxd.com/AliceWatches']) {
+      const kept = await t.rpc(alice.uid, 'set_my_letterboxd', { p_username: typed });
+      assert.equal(kept.toLowerCase(), 'alicewatches', typed);
+    }
+    // Everyone in the club sees it; only she can change it.
+    assert.equal(await t.val(bob.uid, `select letterboxd from public.members where id = $1`, [alice.id]), 'AliceWatches');
+    await t.fails(bob.uid, `update public.members set letterboxd = 'bob' where id = $1`, [alice.id], /permission denied/);
+    await t.rpcFails(alice.uid, 'set_my_letterboxd', { p_username: 'not a name!' }, /Letterboxd username/);
+    assert.equal(await t.rpc(alice.uid, 'set_my_letterboxd', { p_username: '  ' }), null);
+    assert.equal(await t.val(bob.uid, `select letterboxd from public.members where id = $1`, [alice.id]), null);
+    await t.rpcFails('anon', 'set_my_letterboxd', { p_username: 'x' }, /permission denied/);
+  }));
+
 test('deactivate pauses access; reactivate restores the same login', () =>
   inTx(pg, async (t) => {
     const { owner, alice } = await club(t);

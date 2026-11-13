@@ -103,7 +103,7 @@ export type WhoAmI = ({ outcome: 'ok' } & Me) | { outcome: 'no_member'; pending_
 export const whoami = () => rpc<WhoAmI>('whoami');
 export const completeInviteClaim = () => rpc<{ outcome: string; mode?: string }>('complete_invite_claim');
 
-const MEMBER_COLUMNS = 'id, first_name, last_initial, role, status, avatar_kind, avatar_emoji, avatar_path';
+const MEMBER_COLUMNS = 'id, first_name, last_initial, role, status, avatar_kind, avatar_emoji, avatar_path, letterboxd';
 
 export async function listMembers(): Promise<Member[]> {
   return rows<Member>(await supabase.from('members').select(MEMBER_COLUMNS).order('first_name'));
@@ -196,6 +196,29 @@ export async function myScores(memberId: string): Promise<{ nights: number; rati
   };
 }
 
+/**
+ * Everything the Club page adds up: every finished night, who was checked in
+ * at each, and the guesses and ratings the caller may see. Once a night is
+ * over its attendees and guesses are open to the whole club; ratings open
+ * 48 hours after it ends.
+ */
+export async function loadClub(): Promise<{ events: EventRow[]; participants: Participant[]; predictions: Score[]; ratings: Score[] }> {
+  const events = (await listEvents()).filter((event) => event.ended_at);
+  const ids = events.map((event) => event.id);
+  if (ids.length === 0) return { events, participants: [], predictions: [], ratings: [] };
+  const [participants, predictions, ratings] = await Promise.all([
+    supabase.from('event_participants').select(PARTICIPANT_COLUMNS).in('event_id', ids).not('checked_in_at', 'is', null),
+    supabase.from('predictions').select('participant_id, event_id, score, is_active').in('event_id', ids).eq('is_active', true),
+    supabase.from('ratings').select('participant_id, event_id, score').in('event_id', ids),
+  ]);
+  return {
+    events,
+    participants: rows<Participant>(participants),
+    predictions: numeric(rows<Score>(predictions)),
+    ratings: numeric(rows<Score>(ratings)),
+  };
+}
+
 /** Ratings the caller may see, for the Past list's averages. */
 export async function listVisibleRatings(): Promise<Score[]> {
   return numeric(rows<Score>(await supabase.from('ratings').select('participant_id, event_id, score')));
@@ -259,6 +282,8 @@ export const actions = {
   registerPushDevice: (token: string, platform: string) => rpc('register_push_device', { p_push_token: token, p_platform: platform }),
   unregisterPushDevice: (token: string) => rpc('unregister_push_device', { p_push_token: token }),
   /** Deletes the caller's account: outright if they were never on a movie night, otherwise made anonymous. */
+  /** Links (or, with an empty name, unlinks) the caller's Letterboxd. Returns the username kept. */
+  setMyLetterboxd: (username: string) => rpc<string | null>('set_my_letterboxd', { p_username: username }),
   deleteMyAccount: () => rpc<'deleted' | 'anonymized'>('delete_my_account'),
 };
 

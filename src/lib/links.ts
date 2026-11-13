@@ -120,6 +120,11 @@ export function calendarLocation(entry: Pick<CalendarEntry, 'theater' | 'address
   return [entry.theater, entry.address].filter(Boolean).join(', ');
 }
 
+/** A member's Letterboxd profile. */
+export function letterboxdLink(username: string): string {
+  return `https://letterboxd.com/${encodeURIComponent(username)}/`;
+}
+
 // ---------------------------------------------------------------------------
 // Directions and trailers
 // ---------------------------------------------------------------------------

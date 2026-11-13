@@ -6,9 +6,9 @@ import { test } from 'node:test';
 
 import { dayTime, firstEmoji, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, timeUntil, tmdbImage, formatLabel } from '../format.ts';
 import { inboxShows } from '../inbox.ts';
-import { ANDROID_INSTALL_LINK, appleCashLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
+import { ANDROID_INSTALL_LINK, appleCashLink, letterboxdLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
 import { confirmationOpen, isPast, ownerNextStep, rsvpOpen, stageOf } from '../stage.ts';
-import { eventStats, summarize, tiedNames, verdict } from '../stats.ts';
+import { eventStats, memberTotals, summarize, tiedNames, verdict } from '../stats.ts';
 
 const NOW = new Date('2026-10-05T12:00:00Z');
 const at = (hours: number) => new Date(NOW.getTime() + hours * 3_600_000).toISOString();
@@ -265,6 +265,22 @@ test('directions open the phone\'s own maps app; trailers open YouTube', () => {
   // No id on file (or something that is not one): search for it instead.
   assert.equal(trailerLink(null, 'The Matrix', '1999'), 'https://www.youtube.com/results?search_query=The%20Matrix%201999%20official%20trailer');
   assert.equal(trailerLink('x&list=evil', 'Up'), 'https://www.youtube.com/results?search_query=Up%20official%20trailer');
+});
+
+test('member totals: nights, average rating, accuracy, from the nights they were at', () => {
+  const places = [
+    { id: 'p1', event_id: 'e1', member_id: 'a', checked_in_at: 'x' },
+    { id: 'p2', event_id: 'e2', member_id: 'a', checked_in_at: 'x' },
+    { id: 'p3', event_id: 'e3', member_id: 'a', checked_in_at: null }, // said yes, did not come
+    { id: 'p4', event_id: 'e1', member_id: null, checked_in_at: 'x' }, // a guest
+    { id: 'p5', event_id: 'e1', member_id: 'b', checked_in_at: 'x' },
+  ];
+  const totals = memberTotals(places, [{ participant_id: 'p1', score: 4 }, { participant_id: 'p2', score: 3 }], [{ participant_id: 'p1', score: 5 }, { participant_id: 'p2', score: 3 }]);
+  assert.deepEqual(totals.a, { nights: 2, averageRating: 4, accuracy: 90, rated: [{ eventId: 'e1', rating: 5 }, { eventId: 'e2', rating: 3 }] });
+  // Came, but no rating visible yet.
+  assert.deepEqual(totals.b, { nights: 1, averageRating: null, accuracy: null, rated: [] });
+  assert.equal(Object.keys(totals).length, 2);
+  assert.equal(letterboxdLink('alice_w'), 'https://letterboxd.com/alice_w/');
 });
 
 test('verdict: what a member is told about their own guess', () => {
