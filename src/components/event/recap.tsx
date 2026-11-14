@@ -109,7 +109,7 @@ function RecapCard({ ctx, stats, attendees }: { ctx: EventCtx; stats: EventStats
       </View>
 
       <View style={styles.scoreRow}>
-        <Text style={styles.score} numberOfLines={1} adjustsFontSizeToFit>
+        <Text style={styles.score} numberOfLines={1}>
           {score(ratings.average)}
         </Text>
         <View style={styles.scoreSide}>
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   backdrop: { ...StyleSheet.absoluteFillObject },
   holder: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: Spacing.four, gap: Spacing.three },
   cardShadow: { borderRadius: Radius.lg, shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.4, shadowRadius: 20, elevation: 10 },
-  actions: { alignSelf: 'stretch', gap: Spacing.two, maxWidth: 340, width: '100%', alignItems: 'stretch' },
+  actions: { alignSelf: 'center', gap: Spacing.two, maxWidth: 340, width: '100%', alignItems: 'stretch' },
   close: { alignItems: 'center', paddingVertical: Spacing.two },
   closeText: { fontFamily: Font.bold, fontSize: 15, color: '#FFFFFF' },
 
@@ -201,8 +201,8 @@ const styles = StyleSheet.create({
   meta: { fontFamily: Font.medium, fontSize: 12, lineHeight: 17, color: 'rgba(255,255,255,0.72)' },
 
   scoreRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.three },
-  score: { fontFamily: Font.serifBold, fontSize: 72, lineHeight: 80, letterSpacing: -2.5, color: GOLD, flexShrink: 1 },
-  scoreSide: { flexShrink: 0, gap: 2 },
+  score: { fontFamily: Font.serifBold, fontSize: 64, lineHeight: 72, letterSpacing: -2, color: GOLD, flexShrink: 0 },
+  scoreSide: { flex: 1, gap: 2 },
   scoreLabel: { fontFamily: Font.bold, fontSize: 12, lineHeight: 16, letterSpacing: 2, textTransform: 'uppercase', color: '#FFFFFF' },
   scoreNote: { fontFamily: Font.medium, fontSize: 12, lineHeight: 17, color: 'rgba(255,255,255,0.72)' },
 
