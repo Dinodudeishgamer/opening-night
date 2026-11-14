@@ -1,8 +1,10 @@
 // The welcome tour's video: Dino saying hello and showing how a movie night
-// works. Until he has made it, this stays null and the tour shows a "coming
-// soon" card in its place.
+// works. It lives in the private "welcome" storage bucket; the tour asks for
+// a short-lived link to it, so only signed-in members can watch.
 //
-// To put the video in: upload an .mp4 somewhere it can be streamed from (a
-// public Supabase Storage bucket is fine) and set the address here. It goes
-// out with the next over-the-air update; no new build is needed.
-export const INTRO_VIDEO_URL: string | null = null;
+// To replace it: upload a new vertical .mp4 (under 50 MB) to the bucket
+// under a new name and change the path here. It goes out with the next
+// over-the-air update; no new build is needed. Set it to null to show the
+// "coming soon" card instead.
+export const INTRO_VIDEO_PATH: string | null = 'opening-night-welcome-v1.mp4';
+export const INTRO_VIDEO_BUCKET = 'welcome';

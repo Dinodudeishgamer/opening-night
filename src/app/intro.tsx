@@ -1,7 +1,7 @@
 // The welcome tour: the first thing a member sees after signing in on a
 // phone. Four pages, swiped or stepped through:
 //
-//   hello          who this is for, and a word from Dino (his video)
+//   hello          who this is for, and a word from Dino (his tall video)
 //   how it works   the five things a movie night asks of you
 //   your picture   so the roster is faces, not grey circles
 //   notifications  why to turn them on, asked before iOS asks
@@ -13,20 +13,21 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { type Href, useLocalSearchParams, useRouter } from 'expo-router';
 import { useVideoPlayer, VideoView } from 'expo-video';
 import { type ReactNode, useEffect, useRef, useState } from 'react';
-import { Linking, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
+import { ActivityIndicator, Linking, type NativeScrollEvent, type NativeSyntheticEvent, Pressable, ScrollView, StyleSheet, useWindowDimensions, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { AvatarPicker } from '@/components/avatar-picker';
 import { ThemedText } from '@/components/themed-text';
 import { ThemedView } from '@/components/themed-view';
 import { Button } from '@/components/ui/button';
-import { INTRO_VIDEO_URL } from '@/constants/intro';
+import { INTRO_VIDEO_BUCKET, INTRO_VIDEO_PATH } from '@/constants/intro';
 import { Font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { haptic } from '@/lib/haptics';
 import { markIntroSeen } from '@/lib/intro';
 import { type PushState, pushState, registerThisDevice } from '@/lib/push';
 import { useSession } from '@/lib/session';
+import { supabase } from '@/lib/supabase';
 
 const GOLD = '#F2B84B';
 
@@ -237,28 +238,57 @@ function Bulbs() {
   );
 }
 
-/** Dino's video, or the card that holds its place until he has made it. */
+/** Dino's video, tall like a phone, or the card that holds its place. */
 function IntroVideo() {
-  if (INTRO_VIDEO_URL) return <Player url={INTRO_VIDEO_URL} />;
+  const { height } = useWindowDimensions();
+  const [url, setUrl] = useState<string | null>(null);
+  const [failed, setFailed] = useState(false);
+  // Tall, but leaving room for the welcome above it on smaller phones.
+  const tall = Math.round(Math.min(Math.max(height * 0.44, 300), 460));
+  const frame = { height: tall, width: Math.round((tall * 9) / 16) };
+
+  useEffect(() => {
+    if (!INTRO_VIDEO_PATH) return;
+    let live = true;
+    void supabase.storage
+      .from(INTRO_VIDEO_BUCKET)
+      .createSignedUrl(INTRO_VIDEO_PATH, 60 * 60 * 6)
+      .then(({ data }) => {
+        if (!live) return;
+        if (data?.signedUrl) setUrl(data.signedUrl);
+        else setFailed(true);
+      });
+    return () => {
+      live = false;
+    };
+  }, []);
+
+  if (INTRO_VIDEO_PATH && url) return <Player url={url} frame={frame} />;
   return (
-    <View style={styles.video}>
+    <View style={[styles.video, frame]}>
       <LinearGradient colors={['#2A2312', '#0C0D10']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
-      <View style={styles.play}>
-        <Ionicons name="play" size={26} color="#1A1300" style={styles.playGlyph} />
-      </View>
-      <ThemedText style={styles.videoTitle}>A word from Dino</ThemedText>
-      <ThemedText style={styles.videoNote}>Video coming soon</ThemedText>
+      {INTRO_VIDEO_PATH && !failed ? (
+        <ActivityIndicator color={GOLD} />
+      ) : (
+        <>
+          <View style={styles.play}>
+            <Ionicons name="play" size={26} color="#1A1300" style={styles.playGlyph} />
+          </View>
+          <ThemedText style={styles.videoTitle}>A word from Dino</ThemedText>
+          <ThemedText style={styles.videoNote}>{failed ? 'Could not load the video' : 'Video coming soon'}</ThemedText>
+        </>
+      )}
     </View>
   );
 }
 
-function Player({ url }: { url: string }) {
+function Player({ url, frame }: { url: string; frame: { width: number; height: number } }) {
   const player = useVideoPlayer(url, (created) => {
     created.loop = false;
   });
   return (
-    <View style={styles.video}>
-      <VideoView player={player} style={StyleSheet.absoluteFill} contentFit="cover" nativeControls allowsFullscreen />
+    <View style={[styles.video, frame]}>
+      <VideoView player={player} style={frame} contentFit="contain" nativeControls allowsFullscreen />
     </View>
   );
 }
@@ -280,11 +310,11 @@ const styles = StyleSheet.create({
   bulb: { width: 8, height: 8, borderRadius: 4, backgroundColor: GOLD },
   bulbDim: { opacity: 0.35 },
 
-  video: { alignSelf: 'stretch', aspectRatio: 16 / 9, borderRadius: Radius.lg, borderWidth: 1, borderColor: 'rgba(242,184,75,0.45)', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: Spacing.one, backgroundColor: '#0C0D10', marginTop: Spacing.two },
+  video: { borderRadius: Radius.lg, borderWidth: 1, borderColor: 'rgba(242,184,75,0.45)', overflow: 'hidden', alignItems: 'center', justifyContent: 'center', gap: Spacing.one, backgroundColor: '#0C0D10', marginTop: Spacing.two },
   play: { width: 60, height: 60, borderRadius: 30, backgroundColor: GOLD, alignItems: 'center', justifyContent: 'center', marginBottom: Spacing.one },
   playGlyph: { marginLeft: 4 },
   videoTitle: { fontFamily: Font.serifBold, fontSize: 20, lineHeight: 26, color: '#FFFFFF' },
-  videoNote: { fontFamily: Font.bold, fontSize: 11, lineHeight: 15, letterSpacing: 1.6, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)' },
+  videoNote: { fontFamily: Font.bold, fontSize: 11, lineHeight: 15, letterSpacing: 1.6, textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', textAlign: 'center', paddingHorizontal: Spacing.two },
 
   steps: { alignSelf: 'stretch', marginTop: Spacing.one },
   step: { flexDirection: 'row', gap: Spacing.three },
