@@ -4,14 +4,14 @@
 import { Ionicons } from '@expo/vector-icons';
 import { type Href, useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, View } from 'react-native';
 
 import { eventTitle } from '@/components/event-card';
 import { MemberFace } from '@/components/event/face';
+import { LetterboxdButton } from '@/components/letterboxd';
 import { StatsGuide } from '@/components/stats-guide';
 import { ThemedText } from '@/components/themed-text';
 import { BackHeader } from '@/components/ui/back-header';
-import { Button } from '@/components/ui/button';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Poster } from '@/components/ui/poster';
 import { RefreshScreen } from '@/components/ui/refresh-screen';
@@ -20,7 +20,6 @@ import { Font, Radius, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { loadClub } from '@/lib/api';
 import { memberName, score } from '@/lib/format';
-import { letterboxdLink } from '@/lib/links';
 import { useSession } from '@/lib/session';
 import { memberTotals, type MemberTotals } from '@/lib/stats';
 import type { EventRow } from '@/lib/types';
@@ -78,15 +77,7 @@ export default function MemberScreen() {
         <ThemedText type="eyebrow" style={{ color: theme.accent }}>
           {member.role === 'owner' ? 'Organizer' : 'Member'}
         </ThemedText>
-        {member.letterboxd ? (
-          <Button
-            title={`letterboxd.com/${member.letterboxd}`}
-            icon="open-outline"
-            size="sm"
-            variant="secondary"
-            onPress={() => void Linking.openURL(letterboxdLink(member.letterboxd!)).catch(() => {})}
-          />
-        ) : null}
+        {member.letterboxd ? <LetterboxdButton username={member.letterboxd} /> : null}
       </View>
 
       <View style={[styles.totals, { borderColor: theme.border }]}>

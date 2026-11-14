@@ -7,6 +7,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, View } from 'react-native';
 
 import { MemberFace } from '@/components/event/face';
+import { LetterboxdMark } from '@/components/letterboxd';
 import { ThemedText } from '@/components/themed-text';
 import { Chip } from '@/components/ui/chip';
 import { Font, Spacing } from '@/constants/theme';
@@ -69,10 +70,14 @@ export function ClubList({ members, totals }: { members: Member[]; totals: Recor
               <ThemedText style={[styles.rank, { color: theme.textSecondary }]}>{order === 'name' ? '' : index + 1}</ThemedText>
               <MemberFace member={member} size={44} />
               <View style={styles.text}>
-                <ThemedText style={styles.name} numberOfLines={1}>
-                  {memberName(member)}
-                  {member.role === 'owner' ? <ThemedText type="small" style={{ color: theme.accent }}>{'  Organizer'}</ThemedText> : null}
-                </ThemedText>
+                <View style={styles.nameRow}>
+                  <ThemedText style={styles.name} numberOfLines={1}>
+                    {memberName(member)}
+                    {member.role === 'owner' ? <ThemedText type="small" style={{ color: theme.accent }}>{'  Organizer'}</ThemedText> : null}
+                  </ThemedText>
+                  {/* Linked their Letterboxd: the dots say so at a glance. */}
+                  {member.letterboxd ? <LetterboxdMark size={10} /> : null}
+                </View>
                 <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
                   {facts.join(' · ')}
                 </ThemedText>
@@ -93,5 +98,6 @@ const styles = StyleSheet.create({
   pressed: { opacity: 0.7 },
   rank: { width: 18, textAlign: 'right', fontFamily: Font.bold, fontSize: 13 },
   text: { flex: 1, gap: 2 },
-  name: { fontFamily: Font.semibold, fontSize: 16, lineHeight: 21 },
+  nameRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
+  name: { flexShrink: 1, fontFamily: Font.semibold, fontSize: 16, lineHeight: 21 },
 });

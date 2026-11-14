@@ -12,6 +12,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, View } from 'react-native';
 import { AvatarPicker } from '@/components/avatar-picker';
 import { eventTitle } from '@/components/event-card';
 import { MemberAvatar } from '@/components/member-avatar';
+import { LetterboxdButton, LetterboxdMark } from '@/components/letterboxd';
 import { StatsGuide } from '@/components/stats-guide';
 import { ThemedText } from '@/components/themed-text';
 import { Button } from '@/components/ui/button';
@@ -26,7 +27,6 @@ import { actions, listEvents, messageOf, myScores } from '@/lib/api';
 import { confirmAction, showAlert } from '@/lib/dialogs';
 import { MAX_SCORE, memberName, score } from '@/lib/format';
 import { removeMyAvatarFiles } from '@/lib/images';
-import { letterboxdLink } from '@/lib/links';
 import { type PushState, pushState, registerThisDevice } from '@/lib/push';
 import { useSession } from '@/lib/session';
 import { THEME_OPTIONS, type ThemePreference, useThemePreference } from '@/lib/theme-preference';
@@ -191,13 +191,7 @@ export default function YouScreen() {
       <Section title="Letterboxd">
         {member?.letterboxd ? (
           <View style={styles.letterboxd}>
-            <Button
-              title={`letterboxd.com/${member.letterboxd}`}
-              icon="open-outline"
-              size="sm"
-              variant="secondary"
-              onPress={() => void Linking.openURL(letterboxdLink(member.letterboxd!)).catch(() => {})}
-            />
+            <LetterboxdButton username={member.letterboxd} />
             <Button title="Change" size="sm" variant="secondary" onPress={() => setLinking(true)} />
           </View>
         ) : (
@@ -205,7 +199,10 @@ export default function YouScreen() {
             <ThemedText type="small" themeColor="textSecondary">
               Link your Letterboxd and it shows on your profile in the Club, for everyone to follow.
             </ThemedText>
-            <Button title="Link my Letterboxd" icon="link-outline" size="sm" variant="secondary" onPress={() => setLinking(true)} />
+            <Pressable onPress={() => setLinking(true)} accessibilityRole="button" style={({ pressed }) => [styles.linkRow, { borderColor: theme.border }, pressed && styles.pressed]}>
+              <LetterboxdMark size={16} />
+              <ThemedText style={styles.linkText}>Link my Letterboxd</ThemedText>
+            </Pressable>
           </>
         )}
       </Section>
@@ -338,6 +335,8 @@ const styles = StyleSheet.create({
   scoreChipText: { fontFamily: Font.extrabold, fontSize: 13, lineHeight: 18 },
 
   version: { textAlign: 'center', marginTop: Spacing.two },
-  letterboxd: { flexDirection: 'row', flexWrap: 'wrap', gap: Spacing.two },
+  letterboxd: { flexDirection: 'row', flexWrap: 'wrap', alignItems: 'center', gap: Spacing.two },
+  linkRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two, alignSelf: 'flex-start', borderWidth: 1, borderRadius: Radius.full, paddingVertical: Spacing.two, paddingHorizontal: Spacing.three },
+  linkText: { fontFamily: Font.bold, fontSize: 14, lineHeight: 19 },
   credit: { textAlign: 'center', fontSize: 11, lineHeight: 16, opacity: 0.8 },
 });
