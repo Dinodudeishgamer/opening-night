@@ -165,7 +165,7 @@ test('RSVP reminders: gentle, near, final; idempotent; stop once answered', () =
     assert.equal(await kinds(t, c.alice.id, 'rsvp_reminder'), 0, 'too soon for a gentle nudge');
 
     // A day on: the night, and the news of it, are a day old.
-    await t.sql(`update public.events set created_at = now() - interval '25 hours' where id = $1`, [event]);
+    await t.sql(`update public.events set created_at = now() - interval '25 hours', announced_at = now() - interval '25 hours' where id = $1`, [event]);
     await t.sql(`update public.notifications set created_at = now() - interval '25 hours' where event_id = $1 and kind = 'event_created'`, [event]);
     await t.sql(`select private.tick()`);
     await t.sql(`select private.tick()`);

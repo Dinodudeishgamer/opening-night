@@ -42,6 +42,8 @@ export interface EventRow {
   tickets_purchased_at: string | null;
   ended_at: string | null;
   created_at: string;
+  /** When members were told about it; null while Dino has posted it quietly. */
+  announced_at: string | null;
   poster_path: string | null;
   backdrop_path: string | null;
   title_override: string | null;

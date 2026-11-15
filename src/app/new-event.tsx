@@ -15,7 +15,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { DateTimeField } from '@/components/ui/datetime-field';
 import { EmptyState } from '@/components/ui/empty-state';
-import { Row, useAction } from '@/components/ui/kit';
+import { Choices, Row, useAction } from '@/components/ui/kit';
 import { Poster } from '@/components/ui/poster';
 import { Screen } from '@/components/ui/screen';
 import { StatusNote } from '@/components/ui/status-note';
@@ -43,6 +43,8 @@ export default function NewEventScreen() {
   const [backdrop, setBackdrop] = useState<string | null>(null);
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
+  // Quietly by default: add the showtimes, then tell everyone from the night's page.
+  const [tell, setTell] = useState<'later' | 'now'>('later');
   const [ownerNote, setOwnerNote] = useState('');
   const [deadline, setDeadline] = useState(new Date(Date.now() + 5 * DAY));
   const { busy, run } = useAction();
@@ -104,10 +106,15 @@ export default function NewEventScreen() {
         titleOverride: title.trim(),
         descriptionOverride: description.trim(),
         ownerNote: ownerNote.trim(),
+        notify: tell === 'now',
       });
       // Home becomes the only history, so leaving the new event lands there, not back in this form.
       router.replace('/(tabs)' as Href);
       router.push(`/event/${eventId}` as Href);
+      if (tell === 'later') {
+        showAlert('Posted quietly', 'Nobody has been told yet. Add the showtimes, then press "Tell everyone" at the top of your organizer tools.');
+        return;
+      }
       // Dino is not notified about his own night, so say where it went.
       try {
         const reach = await owner.reach();
@@ -192,7 +199,30 @@ export default function NewEventScreen() {
             </ThemedText>
           </Card>
 
-          <Button title="Create and notify everyone" icon="megaphone-outline" onPress={create} loading={busy === 'create'} disabled={deadline.getTime() <= Date.now()} />
+          <Card>
+            <CardTitle title="Tell everyone" icon="notifications-outline" />
+            <Choices<'later' | 'now'>
+              options={[
+                { value: 'later', label: 'After showtimes' },
+                { value: 'now', label: 'Right away' },
+              ]}
+              value={tell}
+              onChange={setTell}
+            />
+            <ThemedText type="small" themeColor="textSecondary">
+              {tell === 'later'
+                ? 'Posts it quietly. Add the showtimes, then press "Tell everyone" on the night, so people can answer everything at once.'
+                : 'Everyone gets "New movie night" as soon as you post.'}
+            </ThemedText>
+          </Card>
+
+          <Button
+            title={tell === 'later' ? 'Post quietly' : 'Post and notify everyone'}
+            icon={tell === 'later' ? 'eye-off-outline' : 'megaphone-outline'}
+            onPress={create}
+            loading={busy === 'create'}
+            disabled={deadline.getTime() <= Date.now()}
+          />
         </>
       )}
     </Screen>

@@ -27,9 +27,16 @@ type DateTimeFieldProps = {
  * at all, gets a wheel built to look and behave like the iOS one. Nothing is
  * typed, so nothing can be typed in the wrong order.
  */
-export function DateTimeField({ value, onChange, label, hint }: DateTimeFieldProps) {
+export function DateTimeField({ value, onChange: report, label, hint }: DateTimeFieldProps) {
   const theme = useTheme();
   const [mode, setMode] = useState<'date' | 'time' | null>(null);
+  // The pickers carry over the seconds of whenever they were opened; a
+  // showtime or deadline is to the minute.
+  const onChange = (date: Date) => {
+    const minute = new Date(date);
+    minute.setSeconds(0, 0);
+    report(minute);
+  };
 
   if (Platform.OS === 'web') return <WheelField value={value} onChange={onChange} label={label} hint={hint} />;
 

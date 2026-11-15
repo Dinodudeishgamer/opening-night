@@ -60,7 +60,12 @@ export function OwnerPanel({ ctx, person, onClosePerson }: { ctx: EventCtx; pers
   const selected = showtimes.find((showtime) => showtime.id === event.selected_showtime_id);
   const coming = ctx.people.filter((p) => p.participant.rsvp_status === 'going' || p.participant.rsvp_status === 'maybe');
   const unpaid = charges.filter((charge) => charge.status === 'unpaid');
-  const next = ownerNextStep(event, {
+  const quiet = !event.announced_at && !event.ended_at;
+  const next = quiet
+    ? active.length === 0
+      ? 'Posted quietly. Add showtimes, then tell everyone.'
+      : 'Posted quietly. Tell everyone when it is ready.'
+    : ownerNextStep(event, {
     activeShowtimes: active.length,
     eligible: voting.eligible,
     voted: voting.voted,
@@ -70,6 +75,28 @@ export function OwnerPanel({ ctx, person, onClosePerson }: { ctx: EventCtx; pers
   const byParticipant = new Map(ctx.people.map((p) => [p.participant.id, p]));
   const canList = (showtimeId: string) =>
     (voting.matrix ?? []).filter((row) => row.current && row.showtime_ids.includes(showtimeId)).map((row) => byParticipant.get(row.participant_id)?.name ?? '?');
+
+  const tellEveryone = () =>
+    confirmAction({
+      title: 'Tell everyone?',
+      message: `Sends "New movie night: ${eventTitle(event)}" to every member.` + (active.length === 0 ? ' There are no showtimes yet.' : ''),
+      confirmLabel: 'Tell everyone',
+      onConfirm: () =>
+        run('announce', async () => {
+          await owner.announceEvent(event.id);
+          try {
+            const reach = await owner.reach();
+            const missing = reach.not_signed_in;
+            showAlert(
+              'Everyone has been told',
+              `Sent to ${reach.phones} phone${reach.phones === 1 ? '' : 's'}.` +
+                (missing.length ? ` Not signed in yet, so they will see it once they do: ${missing.join(', ')}.` : ''),
+            );
+          } catch {
+            // Sent; this is only the receipt.
+          }
+        }),
+    });
 
   const deleteEvent = () =>
     confirmAction({
@@ -91,6 +118,13 @@ export function OwnerPanel({ ctx, person, onClosePerson }: { ctx: EventCtx; pers
   return (
     <Card elevated={next !== null}>
       <CardTitle kicker="Organizer" title={next ?? 'Nothing needs you right now'} icon="construct-outline" />
+
+      {quiet && (
+        <View style={styles.block}>
+          <Fact icon="eye-off-outline" text="Nobody has been notified yet. Members who open the app can still see it." />
+          <Button title="Tell everyone" icon="megaphone-outline" onPress={tellEveryone} loading={busy === 'announce'} />
+        </View>
+      )}
 
       {!selected && !event.ended_at && (
         <View style={styles.block}>
@@ -630,7 +664,7 @@ function PersonSheet({ ctx, person, onClose }: { ctx: EventCtx; person: Person |
 
       {person.member && coming && !event.ended_at && (
         <>
-          <TextField label="Add a guest for them" value={guestName} onChangeText={setGuestName} placeholder="Guest's name" maxLength={60} autoCapitalize="words" />
+          <TextField label="Add a guest for them" value={guestName} onChangeText={setGuestName} placeholder="First name and last initial" maxLength={60} autoCapitalize="words" />
           <Button
             title="Add guest"
             size="sm"

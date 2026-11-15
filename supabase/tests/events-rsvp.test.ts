@@ -47,6 +47,43 @@ test('an event needs a movie and a future RSVP deadline; the movie row is reused
     assert.equal(await t.val('postgres', `select count(*)::int from public.notifications where kind = 'event_created'`), 6);
   }));
 
+test('a night posted quietly tells nobody until Dino tells everyone, once', () =>
+  inTx(pg, async (t) => {
+    const c = await club(t);
+    const event = await t.rpc(c.owner.uid, 'create_event', { p_movie: JSON.stringify(MOVIE), p_rsvp_deadline: inDays(3), p_notify: false });
+    const told = () => t.val('postgres', `select count(*)::int from public.notifications where event_id = $1`, [event]);
+    assert.equal(await told(), 0);
+    assert.equal(await t.val('postgres', `select announced_at from public.events where id = $1`, [event]), null);
+
+    // Even with RSVP about to close, the planner leaves a quiet night alone.
+    await t.sql(`update public.events set rsvp_deadline = now() + interval '1 hour' where id = $1`, [event]);
+    await t.sql(`select private.plan_notifications()`);
+    assert.equal(await told(), 0);
+
+    await t.rpcFails(c.alice.uid, 'announce_event', { p_event_id: event }, /Only the organizer/);
+    await t.rpc(c.owner.uid, 'announce_event', { p_event_id: event });
+    assert.equal(await t.val('postgres', `select count(*)::int from public.notifications where event_id = $1 and kind = 'event_created'`, [event]), 3);
+    assert.notEqual(await t.val('postgres', `select announced_at from public.events where id = $1`, [event]), null);
+    await t.rpcFails(c.owner.uid, 'announce_event', { p_event_id: event }, /already been told/);
+
+    // Posting the usual way is announced at once.
+    const loud = await makeEvent(t, c);
+    assert.notEqual(await t.val('postgres', `select announced_at from public.events where id = $1`, [loud]), null);
+  }));
+
+test('guest names are first name and last initial', () =>
+  inTx(pg, async (t) => {
+    const c = await club(t);
+    const event = await makeEvent(t, c);
+    await t.rpc(c.alice.uid, 'set_rsvp', { p_event_id: event, p_status: 'going' });
+    const names: Record<string, string> = { 'daniel  smith': 'Daniel S.', 'Daniel S': 'Daniel S.', 'Mary Jane Watson': 'Mary W.', zola: 'Zola' };
+    for (const [typed, kept] of Object.entries(names)) {
+      const guest = await t.rpc(c.alice.uid, 'add_guest', { p_event_id: event, p_name: typed });
+      assert.equal(await t.val('postgres', `select display_name from public.guests where id = $1`, [guest]), kept);
+      await t.rpc(c.alice.uid, 'remove_guest', { p_guest_id: guest });
+    }
+  }));
+
 test('settings and theaters are Dino-only writes; members read them', () =>
   inTx(pg, async (t) => {
     const c = await club(t);

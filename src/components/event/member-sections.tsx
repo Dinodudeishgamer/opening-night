@@ -115,7 +115,7 @@ function GuestSheet({ ctx, target, onClose }: { ctx: EventCtx; target: { person?
 
   return (
     <Sheet visible={target !== null} title={editing ? 'Your guest' : 'Bring a guest'} onClose={onClose}>
-      <TextField label="Guest's name" value={name} onChangeText={setName} autoCapitalize="words" maxLength={60} placeholder="Their name" />
+      <TextField label="Guest's name" value={name} onChangeText={setName} autoCapitalize="words" maxLength={60} placeholder="Daniel S." hint="First name and last initial." />
       <Choices<'going' | 'maybe'> options={[{ value: 'going', label: 'Going' }, { value: 'maybe', label: 'Maybe' }]} value={status} onChange={setStatus} />
       <ThemedText type="small" themeColor="textSecondary">
         You answer for your guest all the way through: showtimes, confirming, their prediction, and their rating afterwards. Their ticket is its own charge, and you are the one reminded about it.

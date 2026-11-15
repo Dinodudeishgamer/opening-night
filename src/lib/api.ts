@@ -115,7 +115,7 @@ export async function listMembers(): Promise<Member[]> {
 
 const EVENT_COLUMNS =
   'id, movie_id, rsvp_deadline, voting_revision, selected_showtime_id, showtime_selected_at, confirmation_deadline, ' +
-  'tickets_purchased_at, ended_at, created_at, poster_path, backdrop_path, title_override, description_override, ' +
+  'tickets_purchased_at, ended_at, created_at, announced_at, poster_path, backdrop_path, title_override, description_override, ' +
   'owner_note, voting_closed_at, schedule_revision, total_cost_cents, movie:movies(*)';
 const PARTICIPANT_COLUMNS = 'id, event_id, member_id, guest_id, rsvp_status, confirmation_status, checked_in_at';
 
@@ -314,13 +314,14 @@ export const owner = {
 
   createEvent: (input: {
     movie: Record<string, unknown>; rsvpDeadline: string; posterPath: string | null; backdropPath: string | null;
-    titleOverride: string; descriptionOverride: string; ownerNote: string;
+    titleOverride: string; descriptionOverride: string; ownerNote: string; notify: boolean;
   }) =>
     rpc<string>('create_event', {
       p_movie: input.movie, p_rsvp_deadline: input.rsvpDeadline, p_poster_path: input.posterPath,
       p_backdrop_path: input.backdropPath, p_title_override: input.titleOverride,
-      p_description_override: input.descriptionOverride, p_owner_note: input.ownerNote,
+      p_description_override: input.descriptionOverride, p_owner_note: input.ownerNote, p_notify: input.notify,
     }),
+  announceEvent: (eventId: string) => rpc('announce_event', { p_event_id: eventId }),
   updateEvent: (eventId: string, patch: Record<string, unknown>) => rpc('update_event', { p_event_id: eventId, p_patch: patch }),
   deleteEvent: (eventId: string) => rpc<string[]>('delete_event', { p_event_id: eventId }),
 
