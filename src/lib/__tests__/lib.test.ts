@@ -5,7 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { dayTime, firstEmoji, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, timeUntil, tmdbImage, formatLabel } from '../format.ts';
-import { inboxShows } from '../inbox.ts';
+import { inboxShows, inboxTarget } from '../inbox.ts';
 import { ANDROID_INSTALL_LINK, appleCashLink, letterboxdLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
 import { confirmationOpen, isPast, ownerNextStep, rsvpOpen, stageOf } from '../stage.ts';
 import { eventStats, memberTotals, summarize, tiedNames, verdict } from '../stats.ts';
@@ -290,4 +290,13 @@ test('verdict: what a member is told about their own guess', () => {
   assert.equal(verdict(1.2), 'Way better than you expected.');
   assert.equal(verdict(-0.45), 'Not quite what you hoped.');
   assert.equal(verdict(-1.5), 'Nowhere near what you hoped.');
+});
+
+test('inbox notices open their night, or the screen a message talks about', () => {
+  const id = '0f8fad5b-d9cb-469f-a165-70867728950e';
+  assert.equal(inboxTarget({ event_id: id, title: 'Showtime picked', body: null }), `/event/${id}`);
+  assert.equal(inboxTarget({ event_id: null, title: 'Link your Letterboxd', body: 'Go to You to add it.' }), '/(tabs)/you');
+  assert.equal(inboxTarget({ event_id: null, title: 'The welcome tour is here', body: 'Go to You → Watch the welcome tour' }), '/intro?replay=1');
+  assert.equal(inboxTarget({ event_id: null, title: 'Check out the Club', body: 'Everyone is on the Past tab.' }), '/(tabs)/past');
+  assert.equal(inboxTarget({ event_id: null, title: 'Happy Thanksgiving!', body: 'See you soon.' }), null);
 });

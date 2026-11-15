@@ -105,22 +105,25 @@ export function Row({
   subtitle,
   right,
   onPress,
+  full,
 }: {
   left?: ReactNode;
   title: string;
   subtitle?: string | null;
   right?: ReactNode;
   onPress?: () => void;
+  /** Show every word instead of trimming to a line or two. */
+  full?: boolean;
 }) {
   const body = (
     <View style={styles.row}>
       {left}
       <View style={styles.rowText}>
-        <ThemedText style={styles.rowTitle} numberOfLines={1}>
+        <ThemedText style={styles.rowTitle} numberOfLines={full ? undefined : 1}>
           {title}
         </ThemedText>
         {subtitle ? (
-          <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
+          <ThemedText type="small" themeColor="textSecondary" numberOfLines={full ? undefined : 2}>
             {subtitle}
           </ThemedText>
         ) : null}

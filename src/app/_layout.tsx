@@ -17,7 +17,7 @@ import { Platform } from 'react-native';
 
 import { SplashOverlay } from '@/components/splash-overlay';
 import { useIntroSeen } from '@/lib/intro';
-import { eventIdOf } from '@/lib/push';
+import { targetOf } from '@/lib/push';
 import { openNewestVersion } from '@/lib/updates';
 import { SessionProvider, useSession } from '@/lib/session';
 import { ThemePreferenceProvider, useThemePreference } from '@/lib/theme-preference';
@@ -47,13 +47,13 @@ function RootNavigation() {
     }
   }, [status, segments, router, introSeen]);
 
-  // A tapped notification opens the event it is about.
+  // A tapped notification opens the event, or the screen, it is about.
   useEffect(() => {
     // Notifications exist on phones only; in a browser there is nothing to tap.
     if (status !== 'member' || Platform.OS === 'web') return;
     function open(response: Notifications.NotificationResponse) {
-      const eventId = eventIdOf(response);
-      if (eventId) router.push(`/event/${eventId}` as Href);
+      const target = targetOf(response);
+      if (target) router.push(target as Href);
     }
     Notifications.getLastNotificationResponseAsync().then((response) => {
       if (response) open(response);

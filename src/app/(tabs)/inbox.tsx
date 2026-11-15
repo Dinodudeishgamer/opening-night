@@ -24,7 +24,7 @@ import { SectionHeader } from '@/components/ui/section';
 import { useTheme } from '@/hooks/use-theme';
 import { getPendingActions, listEvents, listInbox, markInboxRead } from '@/lib/api';
 import { dayTime } from '@/lib/format';
-import { INBOX_DAYS, type InboxNight, inboxShows } from '@/lib/inbox';
+import { INBOX_DAYS, type InboxNight, inboxShows, inboxTarget } from '@/lib/inbox';
 import type { InboxItem } from '@/lib/types';
 import { clearUnread } from '@/lib/unread';
 
@@ -80,20 +80,24 @@ export default function InboxScreen() {
 
   const rows = (list: InboxItem[], isNew: boolean) => (
     <Card>
-      {list.map((item) => (
-        <Row
-          key={item.id}
-          left={
-            <View style={[styles.icon, { backgroundColor: isNew ? theme.accent : theme.backgroundSelected }]}>
-              <Ionicons name={ICON[item.kind] ?? 'notifications-outline'} size={18} color={isNew ? theme.onAccent : theme.textSecondary} />
-            </View>
-          }
-          title={item.title}
-          subtitle={[item.body, dayTime(item.created_at)].filter(Boolean).join('\n')}
-          onPress={item.event_id ? () => router.push(`/event/${item.event_id}` as Href) : undefined}
-          right={item.event_id ? <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} /> : undefined}
-        />
-      ))}
+      {list.map((item) => {
+        const target = inboxTarget(item);
+        return (
+          <Row
+            key={item.id}
+            full
+            left={
+              <View style={[styles.icon, { backgroundColor: isNew ? theme.accent : theme.backgroundSelected }]}>
+                <Ionicons name={ICON[item.kind] ?? 'notifications-outline'} size={18} color={isNew ? theme.onAccent : theme.textSecondary} />
+              </View>
+            }
+            title={item.title}
+            subtitle={[item.body, dayTime(item.created_at)].filter(Boolean).join('\n')}
+            onPress={target ? () => router.push(target as Href) : undefined}
+            right={target ? <Ionicons name="chevron-forward" size={18} color={theme.textSecondary} /> : undefined}
+          />
+        );
+      })}
     </Card>
   );
 

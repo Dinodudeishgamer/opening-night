@@ -9,6 +9,7 @@ import * as Notifications from 'expo-notifications';
 import { Platform } from 'react-native';
 
 import { actions } from '@/lib/api';
+import { inboxTarget } from '@/lib/inbox';
 
 const TOKEN_KEY = 'opening-night.push-token';
 
@@ -92,8 +93,10 @@ export async function unregisterThisDevice(): Promise<void> {
   }
 }
 
-/** The event a tapped notification is about, if any. */
-export function eventIdOf(response: Notifications.NotificationResponse): string | null {
-  const id = response.notification.request.content.data?.event_id;
-  return typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id) ? id : null;
+/** Where a tapped notification should open: its movie night, or the screen one of Dino's messages is about. */
+export function targetOf(response: Notifications.NotificationResponse): string | null {
+  const content = response.notification.request.content;
+  const id = content.data?.event_id;
+  const eventId = typeof id === 'string' && /^[0-9a-f-]{36}$/i.test(id) ? id : null;
+  return inboxTarget({ event_id: eventId, title: content.title ?? '', body: content.body ?? null });
 }

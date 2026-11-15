@@ -37,3 +37,17 @@ export function inboxShows(
   if (PAYMENT.has(item.kind)) return night.owes;
   return false;
 }
+
+/**
+ * Where tapping a notice goes: its movie night, or, for one of Dino's own
+ * messages that is about the app rather than a night, the screen it talks
+ * about. Null when there is nowhere better than the Inbox itself.
+ */
+export function inboxTarget(item: { event_id: string | null; title: string; body: string | null }): string | null {
+  if (item.event_id) return `/event/${item.event_id}`;
+  const text = `${item.title} ${item.body ?? ''}`;
+  if (/welcome (tour|video)/i.test(text)) return '/intro?replay=1';
+  if (/letterboxd|profile|picture|photo of you|notification settings|\bYou\b (tab|→|->|>)/i.test(text)) return '/(tabs)/you';
+  if (/\b(the )?club\b|\bpast\b|stats/i.test(text)) return '/(tabs)/past';
+  return null;
+}
