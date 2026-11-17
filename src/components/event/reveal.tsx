@@ -76,7 +76,7 @@ export function RevealModal({ ctx, visible, onClose }: { ctx: EventCtx; visible:
         <View style={[styles.body, { paddingTop: insets.top + Spacing.five, paddingBottom: Math.max(insets.bottom, Spacing.three) + Spacing.two }]}>
           <View style={styles.head}>
             <Text style={styles.eyebrow}>{rated.length > 1 ? 'The verdict so far' : 'First one in'}</Text>
-            <Text style={styles.movie} numberOfLines={2}>
+            <Text style={styles.movie}>
               {eventTitle(event)}
             </Text>
           </View>

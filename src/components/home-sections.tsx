@@ -140,7 +140,7 @@ export function NeedsYou({ needs, events }: { needs: Need[]; events: Map<string,
                 {NEED[need.kind].verb}
                 {who}
               </ThemedText>
-              <ThemedText type="small" themeColor="textSecondary" numberOfLines={2}>
+              <ThemedText type="small" themeColor="textSecondary">
                 {eventTitle(event)}
                 {need.dueAt ? ` · closes ${timeUntil(need.dueAt)}` : ''}
               </ThemedText>
@@ -210,7 +210,7 @@ export function FeaturedCard({ event, showtime, people = [] }: { event: EventRow
             <ThemedText type="eyebrow" style={{ color: ON_IMAGE.gold }}>
               {showtime ? 'Up next' : 'In the works'}
             </ThemedText>
-            <ThemedText style={styles.featuredTitle} numberOfLines={2}>
+            <ThemedText style={styles.featuredTitle}>
               {eventTitle(event)}
             </ThemedText>
             {showtime ? (
@@ -261,7 +261,7 @@ export function ScheduledRow({ event, showtime }: { event: EventRow; showtime: S
           </ThemedText>
         </View>
         <View style={styles.rowText}>
-          <ThemedText style={styles.rowTitle} numberOfLines={2}>
+          <ThemedText style={styles.rowTitle}>
             {eventTitle(event)}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
@@ -296,7 +296,7 @@ export function PlanningRow({ event }: { event: EventRow }) {
       <Card style={styles.row}>
         <Poster path={event.poster_path ?? event.movie.poster_path} width={56} />
         <View style={styles.rowText}>
-          <ThemedText style={styles.rowTitle} numberOfLines={2}>
+          <ThemedText style={styles.rowTitle}>
             {eventTitle(event)}
           </ThemedText>
           <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>

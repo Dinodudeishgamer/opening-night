@@ -164,7 +164,7 @@ export default function YouScreen() {
                 <View style={[styles.scoreChip, { backgroundColor: theme.accent }]}>
                   <ThemedText style={[styles.scoreChipText, { color: theme.onAccent }]}>{score(rating)}</ThemedText>
                 </View>
-                <ThemedText type="small" numberOfLines={2} style={styles.shelfTitle}>
+                <ThemedText type="small" style={styles.shelfTitle}>
                   {eventTitle(event)}
                 </ThemedText>
               </Pressable>

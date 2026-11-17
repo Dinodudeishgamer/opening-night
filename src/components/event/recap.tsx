@@ -96,7 +96,7 @@ function RecapCard({ ctx, stats, attendees }: { ctx: EventCtx; stats: EventStats
       <View style={styles.film}>
         {poster ? <Image source={{ uri: poster }} style={styles.poster} contentFit="cover" /> : <View style={[styles.poster, styles.posterEmpty]} />}
         <View style={styles.filmText}>
-          <Text style={styles.title} numberOfLines={3}>
+          <Text style={styles.title}>
             {eventTitle(event)}
           </Text>
           {when ? <Text style={styles.meta}>{when}</Text> : null}

@@ -187,7 +187,7 @@ export default function PastScreen() {
                 style={({ pressed }) => [styles.line, index > 0 && { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: theme.border }, pressed && styles.pressed]}>
                 <Poster path={event.poster_path ?? event.movie.poster_path} width={44} />
                 <View style={styles.lineText}>
-                  <ThemedText style={styles.lineTitle} numberOfLines={2}>
+                  <ThemedText style={styles.lineTitle}>
                     {eventTitle(event)}
                   </ThemedText>
                   <ThemedText type="small" themeColor="textSecondary" numberOfLines={1}>
@@ -232,7 +232,7 @@ export default function PastScreen() {
                     </View>
                   )}
                 </View>
-                <ThemedText style={styles.title} numberOfLines={2}>
+                <ThemedText style={styles.title}>
                   {eventTitle(event)}
                 </ThemedText>
                 <ThemedText type="small" themeColor="textSecondary">

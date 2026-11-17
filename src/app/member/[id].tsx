@@ -107,7 +107,7 @@ export default function MemberScreen() {
                 <View style={[styles.chip, { backgroundColor: theme.accent }]}>
                   <ThemedText style={[styles.chipText, { color: theme.onAccent }]}>{score(rating)}</ThemedText>
                 </View>
-                <ThemedText type="small" numberOfLines={2} style={styles.shelfTitle}>
+                <ThemedText type="small" style={styles.shelfTitle}>
                   {eventTitle(event)}
                 </ThemedText>
               </Pressable>
