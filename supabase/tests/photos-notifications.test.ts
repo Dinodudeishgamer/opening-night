@@ -293,6 +293,23 @@ test('payment reminders: no amount, keep coming while it is owed, stop at once w
     assert.equal(await kinds(t, c.alice.id, 'payment_reminder'), before);
   }));
 
+test('an hour before it is time to be there, the people coming are told to head out', () =>
+  inTx(pg, async (t) => {
+    const c = await club(t);
+    const s = await atTheTheater(t, c);
+    // Two hours out: be-there-by (20 minutes earlier) is still more than an hour away.
+    await t.sql(`update public.showtimes set starts_at = now() + interval '2 hours' where id = $1`, [s.early]);
+    await t.sql(`select private.tick()`);
+    assert.equal(await kinds(t, c.alice.id, 'arrival_reminder'), 0);
+    await t.sql(`update public.showtimes set starts_at = now() + interval '70 minutes' where id = $1`, [s.early]);
+    await t.sql(`select private.tick()`);
+    await t.sql(`select private.tick()`);
+    assert.equal(await kinds(t, c.alice.id, 'arrival_reminder'), 1, 'once');
+    assert.equal(await kinds(t, c.bob.id, 'arrival_reminder'), 0, 'Bob is not coming');
+    const body = await t.val('postgres', `select body from public.notifications where recipient_member_id = $1 and kind = 'event_reminder'`, [c.alice.id]);
+    assert.match(body, /Be there by \d{1,2}:\d{2} [AP]M/);
+  }));
+
 test('event and rating reminders', () =>
   inTx(pg, async (t) => {
     const c = await club(t);

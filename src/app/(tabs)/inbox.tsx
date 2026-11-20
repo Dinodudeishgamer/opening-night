@@ -39,6 +39,7 @@ const ICON: Record<string, keyof typeof Ionicons.glyphMap> = {
   payment_posted: 'cash-outline',
   payment_reminder: 'cash-outline',
   event_reminder: 'alarm-outline',
+  arrival_reminder: 'car-outline',
   rating_open: 'star-outline',
   rating_reminder: 'star-outline',
   announcement: 'megaphone-outline',

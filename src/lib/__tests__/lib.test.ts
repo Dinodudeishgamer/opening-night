@@ -4,7 +4,7 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
-import { dayTime, firstEmoji, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, timeUntil, tmdbImage, formatLabel } from '../format.ts';
+import { ARRIVE_EARLY_MINUTES, arriveBy, DATE_LOCALE, dayTime, firstEmoji, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, timeUntil, tmdbImage, formatLabel } from '../format.ts';
 import { inboxShows, inboxTarget } from '../inbox.ts';
 import { ANDROID_INSTALL_LINK, appleCashLink, letterboxdLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
 import { confirmationOpen, isPast, ownerNextStep, rsvpOpen, stageOf } from '../stage.ts';
@@ -299,4 +299,10 @@ test('inbox notices open their night, or the screen a message talks about', () =
   assert.equal(inboxTarget({ event_id: null, title: 'The welcome tour is here', body: 'Go to You → Watch the welcome tour' }), '/intro?replay=1');
   assert.equal(inboxTarget({ event_id: null, title: 'Check out the Club', body: 'Everyone is on the Past tab.' }), '/(tabs)/past');
   assert.equal(inboxTarget({ event_id: null, title: 'Happy Thanksgiving!', body: 'See you soon.' }), null);
+});
+
+test('arriveBy is twenty minutes before the showtime', () => {
+  assert.equal(ARRIVE_EARLY_MINUTES, 20);
+  const showtime = new Date(2026, 10, 21, 19, 0, 5).toISOString();
+  assert.equal(arriveBy(showtime), new Date(2026, 10, 21, 18, 40, 5).toLocaleTimeString(DATE_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: true }));
 });

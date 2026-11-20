@@ -128,6 +128,18 @@ export function timeOnly(iso: string): string {
   return new Date(iso).toLocaleTimeString(DATE_LOCALE, TIME);
 }
 
+/**
+ * How long before the showtime the club aims to be in its seats: traffic,
+ * snacks, previews. The server's reminders use the same 20 minutes
+ * (v_early in private.plan_notifications).
+ */
+export const ARRIVE_EARLY_MINUTES = 20;
+
+/** "7:10 PM" for a 7:30 PM showtime: when to be there. */
+export function arriveBy(startsAt: string): string {
+  return timeOnly(new Date(new Date(startsAt).getTime() - ARRIVE_EARLY_MINUTES * 60_000).toISOString());
+}
+
 /** "Fri 7:30 PM", for a chip. */
 export function weekdayTime(iso: string): string {
   return new Date(iso).toLocaleString(DATE_LOCALE, { weekday: 'short', ...TIME });

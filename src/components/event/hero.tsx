@@ -21,7 +21,7 @@ import { Font, Radius, Shadow, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { calendarState, saveToCalendar } from '@/lib/calendar';
 import { showAlert } from '@/lib/dialogs';
-import { DATE_LOCALE, dayTime, formatLabel, timeOnly, timeUntil, tmdbImage } from '@/lib/format';
+import { arriveBy, DATE_LOCALE, dayTime, formatLabel, timeOnly, timeUntil, tmdbImage } from '@/lib/format';
 import { calendarLocation, type CalendarEntry, mapsLink, trailerLink } from '@/lib/links';
 import { backOrHome } from '@/lib/navigation';
 import { rsvpOpen } from '@/lib/stage';
@@ -192,6 +192,11 @@ function Ticket({ showtime, ended }: { showtime: Showtime; ended: boolean }) {
           </ThemedText>
           <ThemedText style={styles.ticketDay}>{date.toLocaleDateString(DATE_LOCALE, { weekday: 'long', month: 'short', day: 'numeric' })}</ThemedText>
           <ThemedText style={styles.ticketTime}>{timeOnly(showtime.starts_at)}</ThemedText>
+          {!ended && (
+            <ThemedText type="smallBold" style={{ color: theme.accent }}>
+              Be there by {arriveBy(showtime.starts_at)}
+            </ThemedText>
+          )}
           <ThemedText style={styles.ticketTheater} numberOfLines={1}>
             {showtime.theater.name}
           </ThemedText>

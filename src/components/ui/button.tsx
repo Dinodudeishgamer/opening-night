@@ -1,5 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
-import { ActivityIndicator, Pressable, PressableProps, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
+import { ActivityIndicator, Platform, Pressable, PressableProps, StyleProp, StyleSheet, View, ViewStyle } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { Font, Radius, Shadow, Spacing } from '@/constants/theme';
@@ -101,6 +101,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
   },
   contentRow: { flexDirection: 'row', alignItems: 'center', gap: Spacing.two },
-  text: { fontFamily: Font.bold, fontSize: 16, letterSpacing: 0.2 },
+  // Android measures text with letterSpacing a hair too narrow, so a centred
+  // label wraps its last letter onto a new line ("Submi / t"). iOS only.
+  text: { fontFamily: Font.bold, fontSize: 16, letterSpacing: Platform.OS === 'ios' ? 0.2 : 0, textAlign: 'center' },
   textSm: { fontSize: 14 },
 });

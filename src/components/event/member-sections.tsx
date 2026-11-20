@@ -207,6 +207,9 @@ export function VotingSection({ ctx }: { ctx: EventCtx }) {
         voters.map((person) => {
           const row = voting.mine.find((entry) => entry.participant_id === person.participant.id);
           const chosen = picks[person.participant.id] ?? [];
+          // What is on record and still counts, and whether the ticks on screen match it.
+          const saved = row?.current ? row.showtime_ids : null;
+          const unchanged = saved !== null && saved.length === chosen.length && saved.every((id) => chosen.includes(id));
           return (
             <View key={person.participant.id} style={styles.block}>
               {voters.length > 1 && <ThemedText type="smallBold">{person.isMe ? 'You' : person.name}</ThemedText>}
@@ -238,10 +241,23 @@ export function VotingSection({ ctx }: { ctx: EventCtx }) {
                   </Pressable>
                 );
               })}
+              {unchanged && saved && (
+                <Fact
+                  icon="checkmark-circle-outline"
+                  tone="success"
+                  text={
+                    saved.length === 0
+                      ? 'Saved: none of these work. If that changes, tick the ones that do and update.'
+                      : `Saved: ${saved.length === active.length ? 'all of these work' : `${saved.length} of these work${saved.length === 1 ? 's' : ''}`}. Change your ticks to update.`
+                  }
+                />
+              )}
               <Button
-                title={chosen.length === 0 ? 'None of these work' : row?.current ? 'Update my answer' : 'Submit'}
+                title={unchanged ? 'Saved' : chosen.length === 0 ? 'None of these work' : row?.current ? 'Update my answer' : 'Submit'}
+                icon={unchanged ? 'checkmark' : undefined}
                 size="sm"
                 variant={row?.current ? 'secondary' : 'primary'}
+                disabled={unchanged}
                 loading={busy === person.participant.id}
                 onPress={async () => {
                   if (await run(person.participant.id, () => actions.submitBallot(person.participant.id, chosen))) haptic.success();
