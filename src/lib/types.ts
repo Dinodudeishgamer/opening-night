@@ -81,6 +81,8 @@ export interface Participant {
   rsvp_status: RsvpStatus | null;
   confirmation_status: ConfirmationStatus | null;
   checked_in_at: string | null;
+  /** Where they sit, as Dino typed it from the tickets ("F12"). */
+  seat_label: string | null;
 }
 
 export interface Guest {

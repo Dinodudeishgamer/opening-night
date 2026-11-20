@@ -117,7 +117,7 @@ const EVENT_COLUMNS =
   'id, movie_id, rsvp_deadline, voting_revision, selected_showtime_id, showtime_selected_at, confirmation_deadline, ' +
   'tickets_purchased_at, ended_at, created_at, announced_at, poster_path, backdrop_path, title_override, description_override, ' +
   'owner_note, voting_closed_at, schedule_revision, total_cost_cents, movie:movies(*)';
-const PARTICIPANT_COLUMNS = 'id, event_id, member_id, guest_id, rsvp_status, confirmation_status, checked_in_at';
+const PARTICIPANT_COLUMNS = 'id, event_id, member_id, guest_id, rsvp_status, confirmation_status, checked_in_at, seat_label';
 
 export async function listEvents(): Promise<EventRow[]> {
   return rows<EventRow>(await supabase.from('events').select(EVENT_COLUMNS).order('created_at', { ascending: false }));
@@ -267,6 +267,8 @@ export const actions = {
   removeGuest: (guestId: string) => rpc('remove_guest', { p_guest_id: guestId }),
   submitBallot: (participantId: string, showtimeIds: string[]) =>
     rpc('submit_ballot', { p_participant_id: participantId, p_showtime_ids: showtimeIds }),
+  /** Dino only. Empty clears the seat. */
+  setSeat: (participantId: string, seat: string | null) => rpc('set_seat', { p_participant_id: participantId, p_seat: seat }),
   setConfirmation: (participantId: string, status: string) =>
     rpc('set_confirmation', { p_participant_id: participantId, p_status: status }),
   submitPrediction: (participantId: string, score: number) =>

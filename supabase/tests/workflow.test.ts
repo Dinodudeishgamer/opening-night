@@ -274,9 +274,9 @@ test('picking a showtime confirms the people who already said it works', () =>
 
     // Each member hears once, and it says which of the two happened.
     const told = (member: string) => t.sql(`select title, body from public.notifications where recipient_member_id = $1 and kind = 'showtime_selected'`, [member]);
-    assert.deepEqual(await told(c.alice.id), [{ title: 'Showtime picked', body: 'Confirm whether you can make it.' }], 'asked for herself, though her guest is set');
-    assert.deepEqual((await told(c.bob.id)).map((row) => row.title), ['Showtime picked']);
-    assert.deepEqual((await told(c.owner.id)).map((row) => row.title), ["Showtime picked: you're in"]);
+    assert.deepEqual(await told(c.alice.id), [{ title: 'Showtime picked · The Matrix', body: 'Confirm whether you can make it.' }], 'asked for herself, though her guest is set');
+    assert.deepEqual((await told(c.bob.id)).map((row) => row.title), ['Showtime picked · The Matrix']);
+    assert.deepEqual((await told(c.owner.id)).map((row) => row.title), ["Showtime picked: you're in · The Matrix"]);
     assert.match((await told(c.owner.id))[0].body, /you are confirmed/);
     assert.equal(
       await t.val('postgres', `select (details ->> 'confirmed_from_ballots')::int from private.audit_log where action = 'showtime.selected' and target_id = $1`, [n.event]),
@@ -579,7 +579,14 @@ test('check-in is Dino\'s, can fill a missing prediction, and supports walk-ins 
 
     await t.rpc(c.owner.uid, 'undo_check_in', { p_participant_id: walt });
     assert.equal(await t.val('postgres', `select checked_in_at from public.event_participants where id = $1`, [walt]), null);
-    await t.fails(c.alice.uid, `select seat_label from public.event_participants`, [], /permission denied/);
+
+    // Seats: only Dino writes them, tidied; members read them on the rows they can see.
+    await t.rpc(c.owner.uid, 'set_seat', { p_participant_id: carol, p_seat: ' f 12 ' });
+    assert.equal((await t.q(c.alice.uid, `select seat_label from public.event_participants where id = $1`, [carol]))[0]?.seat_label, 'F12');
+    await t.fails(c.alice.uid, `select public.set_seat($1, 'A1')`, [carol], /organizer/);
+    await t.fails(c.owner.uid, `select public.set_seat($1, $2)`, [carol, 'X'.repeat(21)], /at most 20/);
+    await t.rpc(c.owner.uid, 'set_seat', { p_participant_id: carol, p_seat: '' });
+    assert.equal(await t.val('postgres', `select seat_label from public.event_participants where id = $1`, [carol]), null);
   }));
 
 /** confirmed(), tickets bought, Dino and Alice checked in with predictions. */

@@ -10,6 +10,7 @@ import { ConfirmSection, PaymentSection, PredictionSection, RatingSection, RsvpS
 import { OwnerPanel } from '@/components/event/owner-panel';
 import { PeopleSection, ResultsSection } from '@/components/event/people-results';
 import { PhotosSection } from '@/components/event/photos-section';
+import { ShowdaySection } from '@/components/event/showday';
 import { BackHeader } from '@/components/ui/back-header';
 import { EmptyState } from '@/components/ui/empty-state';
 import { RefreshScreen } from '@/components/ui/refresh-screen';
@@ -50,6 +51,7 @@ export default function EventScreen() {
     // No top inset: the hero's still runs up under the status bar and carries the back button.
     <RefreshScreen onRefresh={refresh} edges={['bottom', 'left', 'right']}>
       <Hero ctx={ctx} />
+      <ShowdaySection ctx={ctx} />
       {isOwner && <OwnerPanel ctx={ctx} person={managed} onClosePerson={() => setManaging(null)} />}
       <RatingSection ctx={ctx} />
       <PaymentSection ctx={ctx} />

@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { type Href, useRouter } from 'expo-router';
-import { Pressable, StyleSheet, View } from 'react-native';
+import { Pressable, StyleSheet, useWindowDimensions, View } from 'react-native';
 
 import { eventTitle } from '@/components/event-card';
 import { MemberAvatar } from '@/components/member-avatar';
@@ -185,6 +185,9 @@ export function FeaturedCard({ event, showtime, people = [] }: { event: EventRow
   const router = useRouter();
   const stage = stageOf(event);
   const art = tmdbImage(event.backdrop_path ?? event.movie.backdrop_path, 'w780') ?? tmdbImage(event.poster_path ?? event.movie.poster_path, 'w500');
+  // At least the picture's 5:4 shape, but taller when a long title needs the room,
+  // so the words never crowd the bottom edge.
+  const minHeight = (useWindowDimensions().width - Spacing.four * 2) / 1.25;
 
   return (
     <View style={[styles.featuredShadow, Shadow.lg]}>
@@ -192,7 +195,7 @@ export function FeaturedCard({ event, showtime, people = [] }: { event: EventRow
         onPress={() => open(router, event.id)}
         accessibilityRole="button"
         accessibilityLabel={eventTitle(event)}
-        style={({ pressed }) => [styles.featured, pressed && styles.pressed]}
+        style={({ pressed }) => [styles.featured, { minHeight }, pressed && styles.pressed]}
       >
         {art && <Image source={{ uri: art }} style={StyleSheet.absoluteFill} contentFit="cover" transition={250} />}
         {/* Dimmed a little at the top for the pill, and down into near-black under the words. */}
@@ -223,7 +226,7 @@ export function FeaturedCard({ event, showtime, people = [] }: { event: EventRow
             ) : (
               <ThemedText style={styles.featuredWhere}>{planningLine(event)}</ThemedText>
             )}
-            <View style={styles.trackRow}>
+            <View style={[styles.trackRow, styles.featuredTrack]}>
               <StageTrack stage={stage} onImage />
               <ThemedText style={styles.featuredStage}>{STAGE_LABEL[stage]}</ThemedText>
             </View>
@@ -367,11 +370,11 @@ const styles = StyleSheet.create({
   needTitle: { fontFamily: Font.bold, fontSize: 16, lineHeight: 21 },
 
   featuredShadow: { borderRadius: Radius.lg },
+  featuredTrack: { marginTop: Spacing.two },
   featured: {
     borderRadius: Radius.lg,
     overflow: 'hidden',
     backgroundColor: '#17120A',
-    aspectRatio: 1.25,
     justifyContent: 'space-between',
   },
   featuredTop: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: Spacing.two, padding: Spacing.three },
@@ -386,7 +389,7 @@ const styles = StyleSheet.create({
     lineHeight: 17,
     letterSpacing: 0.2,
   },
-  featuredFoot: { padding: Spacing.three, gap: 2 },
+  featuredFoot: { padding: Spacing.three, paddingBottom: Spacing.four, gap: 2 },
   crowd: { flexDirection: 'row', alignItems: 'center', flexShrink: 0, backgroundColor: 'rgba(0,0,0,0.45)', borderRadius: Radius.full, paddingVertical: 3, paddingLeft: 3, paddingRight: Spacing.two + 2 },
   face: { borderRadius: 15, borderWidth: 2, borderColor: '#17120A' },
   faceOverlap: { marginLeft: -9 },

@@ -235,6 +235,23 @@ test('the day-before reminder says today when the showtime is today', () =>
     assert.equal(await title(), 'The Matrix is today');
   }));
 
+test('a notification about a movie night always names the movie', () =>
+  inTx(pg, async (t) => {
+    const c = await club(t);
+    const n = await night(t, c);
+    const latest = () => t.val('postgres', `select title from public.notifications where recipient_member_id = $1 and kind = 'announcement' order by created_at desc, id desc limit 1`, [c.alice.id]);
+    await t.rpc(c.owner.uid, 'send_notification', { p_title: 'Showtimes have been posted!', p_event_id: n.event });
+    assert.equal(await latest(), 'Showtimes have been posted! · The Matrix');
+    // Already named (any case): left alone.
+    await t.sql(`delete from public.notifications where kind = 'announcement'`);
+    await t.rpc(c.owner.uid, 'send_notification', { p_title: 'the matrix tickets are up', p_event_id: n.event });
+    assert.equal(await latest(), 'the matrix tickets are up');
+    // Not about a night: nothing to add.
+    await t.sql(`delete from public.notifications where kind = 'announcement'`);
+    await t.rpc(c.owner.uid, 'send_notification', { p_title: 'Happy Thanksgiving' });
+    assert.equal(await latest(), 'Happy Thanksgiving');
+  }));
+
 test('a night posted with a short deadline does not nudge on the heels of announcing it', () =>
   inTx(pg, async (t) => {
     const c = await club(t);
@@ -257,7 +274,7 @@ test('confirm: the last call goes out even right after the showtime is picked', 
     await t.sql(`update public.events set confirmation_deadline = now() + interval '3 hours' where id = $1`, [n.event]);
     await t.sql(`select private.tick()`);
     assert.equal(await kinds(t, c.alice.id, 'confirm_reminder'), 1);
-    assert.equal(await t.val('postgres', `select title from public.notifications where recipient_member_id = $1 and kind = 'confirm_reminder'`, [c.alice.id]), 'Last call to confirm');
+    assert.equal(await t.val('postgres', `select title from public.notifications where recipient_member_id = $1 and kind = 'confirm_reminder'`, [c.alice.id]), 'Last call to confirm · The Matrix');
   }));
 
 test('payment reminders: no amount, keep coming while it is owed, stop at once when paid', () =>

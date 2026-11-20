@@ -5,6 +5,7 @@ import assert from 'node:assert/strict';
 import { test } from 'node:test';
 
 import { ARRIVE_EARLY_MINUTES, arriveBy, DATE_LOCALE, dayTime, firstEmoji, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, timeUntil, tmdbImage, formatLabel } from '../format.ts';
+import { bySeat, isShowday, tidySeat } from '../seats.ts';
 import { inboxShows, inboxTarget } from '../inbox.ts';
 import { ANDROID_INSTALL_LINK, appleCashLink, letterboxdLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
 import { confirmationOpen, isPast, ownerNextStep, rsvpOpen, stageOf } from '../stage.ts';
@@ -305,4 +306,19 @@ test('arriveBy is twenty minutes before the showtime', () => {
   assert.equal(ARRIVE_EARLY_MINUTES, 20);
   const showtime = new Date(2026, 10, 21, 19, 0, 5).toISOString();
   assert.equal(arriveBy(showtime), new Date(2026, 10, 21, 18, 40, 5).toLocaleTimeString(DATE_LOCALE, { hour: 'numeric', minute: '2-digit', hour12: true }));
+});
+
+test('showday is the day of the showtime, until a few hours after it', () => {
+  const start = new Date(2026, 10, 21, 19, 0);
+  assert.equal(isShowday(start.toISOString(), new Date(2026, 10, 21, 8, 0)), true, 'that morning');
+  assert.equal(isShowday(start.toISOString(), new Date(2026, 10, 21, 22, 30)), true, 'during');
+  assert.equal(isShowday(start.toISOString(), new Date(2026, 10, 20, 23, 59)), false, 'the night before');
+  assert.equal(isShowday(new Date(2026, 10, 21, 13, 0).toISOString(), new Date(2026, 10, 21, 18, 0)), false, 'long over');
+});
+
+test('seats are tidied and sorted row then number', () => {
+  assert.equal(tidySeat(' f 12 '), 'F12');
+  assert.equal(tidySeat('   '), null);
+  const people = [{ n: 'a', s: 'F10' }, { n: 'b', s: null }, { n: 'c', s: 'F9' }, { n: 'd', s: 'E14' }];
+  assert.deepEqual(bySeat(people, (p) => p.s).map((p) => p.n), ['d', 'c', 'a', 'b']);
 });
