@@ -232,7 +232,7 @@ test('the day-before reminder says today when the showtime is today', () =>
       [n.early],
     );
     await t.sql(`select private.tick()`);
-    assert.equal(await title(), 'The Matrix is today');
+    assert.match(await title(), /^(Today|Tonight) at \d{1,2}:\d{2} [AP]M · The Matrix$/);
   }));
 
 test('a notification about a movie night always names the movie', () =>
@@ -263,7 +263,7 @@ test('a night posted with a short deadline does not nudge on the heels of announ
     // The last call is never held back.
     await t.sql(`update public.events set rsvp_deadline = now() + interval '3 hours'`);
     await t.sql(`select private.tick()`);
-    assert.equal(await t.val('postgres', `select title from public.notifications where recipient_member_id = $1 and kind = 'rsvp_reminder'`, [c.alice.id]), 'Last call: The Matrix');
+    assert.match(await t.val('postgres', `select title from public.notifications where recipient_member_id = $1 and kind = 'rsvp_reminder'`, [c.alice.id]), /^Last call: RSVP closes (today|tonight|tomorrow) at \d{1,2}:\d{2} [AP]M · The Matrix$/);
   }));
 
 test('confirm: the last call goes out even right after the showtime is picked', () =>
@@ -274,7 +274,7 @@ test('confirm: the last call goes out even right after the showtime is picked', 
     await t.sql(`update public.events set confirmation_deadline = now() + interval '3 hours' where id = $1`, [n.event]);
     await t.sql(`select private.tick()`);
     assert.equal(await kinds(t, c.alice.id, 'confirm_reminder'), 1);
-    assert.equal(await t.val('postgres', `select title from public.notifications where recipient_member_id = $1 and kind = 'confirm_reminder'`, [c.alice.id]), 'Last call to confirm · The Matrix');
+    assert.match(await t.val('postgres', `select title from public.notifications where recipient_member_id = $1 and kind = 'confirm_reminder'`, [c.alice.id]), /^Last call: confirm by .+ at \d{1,2}:\d{2} [AP]M · The Matrix$/);
   }));
 
 test('payment reminders: no amount, keep coming while it is owed, stop at once when paid', () =>
@@ -308,6 +308,19 @@ test('payment reminders: no amount, keep coming while it is owed, stop at once w
     await t.sql(`update public.charges set created_at = now() - interval '30 days' where id = $1`, [charge]);
     await t.sql(`select private.tick()`);
     assert.equal(await kinds(t, c.alice.id, 'payment_reminder'), before);
+  }));
+
+test("reminders lead with when, in the club's words", () =>
+  inTx(pg, async (t) => {
+    // A time on the club's calendar, some days from today.
+    const on = (days: number, hour: number) =>
+      t.val('postgres', `select private.when_text((date_trunc('day', now() at time zone 'America/Chicago') + make_interval(days => $1, hours => $2)) at time zone 'America/Chicago')`, [days, hour]);
+    assert.equal(await on(0, 10), 'today at 10:00 AM');
+    assert.equal(await on(0, 19), 'tonight at 7:00 PM');
+    assert.equal(await on(1, 19), 'tomorrow at 7:00 PM');
+    assert.match(await on(3, 19), /^(Monday|Tuesday|Wednesday|Thursday|Friday|Saturday|Sunday) at 7:00 PM$/);
+    assert.match(await on(20, 19), /^[A-Z][a-z]{2} \d{1,2} at 7:00 PM$/);
+    assert.equal(await t.val('postgres', `select private.capitalized('tomorrow at 7:00 PM')`), 'Tomorrow at 7:00 PM');
   }));
 
 test('an hour before it is time to be there, the people coming are told to head out', () =>
