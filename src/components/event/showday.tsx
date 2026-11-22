@@ -98,7 +98,7 @@ export function ShowdaySection({ ctx }: { ctx: EventCtx }) {
       </View>
 
       {ctx.settings?.rewards_qr && (
-        <Button title="Buying snacks? Dino's rewards QR" icon="qr-code-outline" size="sm" onPress={() => router.push('/rewards' as Href)} />
+        <Button title="Buying snacks? 25% off with the rewards QR" icon="qr-code-outline" size="sm" onPress={() => router.push('/rewards' as Href)} />
       )}
 
       {ctx.isOwner &&

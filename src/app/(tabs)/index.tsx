@@ -1,9 +1,10 @@
 // Coming Soon: what needs you, then every movie night that has not happened
 // yet. A night leaves this screen the moment Dino ends it and goes to Past;
 // if it still needs a rating, that stays up here under "Needs you".
+import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { type Href, useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { Pressable, RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { FeaturedCard, type Need, NeedsYou, PlanningRow, ScheduledRow } from '@/components/home-sections';
@@ -99,6 +100,15 @@ export default function ComingSoonScreen() {
               <ThemedText style={styles.wordmark}>Coming Soon</ThemedText>
             </View>
             {isOwner && <Button title="New" icon="add" size="sm" onPress={() => router.push('/new-event' as Href)} />}
+            {/* Dino's Cinemark Platinum Rewards QR: 25% off concessions, one tap from home. */}
+            <Pressable
+              onPress={() => router.push('/rewards' as Href)}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Dino's Cinemark Platinum Rewards QR"
+              style={({ pressed }) => [styles.rewards, { backgroundColor: theme.accent }, pressed && styles.rewardsPressed]}>
+              <MaterialCommunityIcons name="popcorn" size={24} color={theme.onAccent} />
+            </Pressable>
           </View>
 
           <NeedsYou needs={needs} events={byId} />
@@ -149,5 +159,7 @@ const styles = StyleSheet.create({
   fill: { flex: 1 },
   content: { flexGrow: 1, gap: Spacing.three, paddingHorizontal: Spacing.four, paddingTop: Spacing.three, paddingBottom: Spacing.five },
   header: { flexDirection: 'row', alignItems: 'flex-end', gap: Spacing.three },
+  rewards: { width: 44, height: 44, borderRadius: 22, alignItems: 'center', justifyContent: 'center' },
+  rewardsPressed: { opacity: 0.85, transform: [{ scale: 0.94 }] },
   wordmark: { fontFamily: Font.serifBold, fontSize: 30, lineHeight: 36, letterSpacing: -0.5 },
 });

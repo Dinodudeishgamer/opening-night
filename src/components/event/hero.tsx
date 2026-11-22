@@ -150,7 +150,7 @@ export function Hero({ ctx }: { ctx: EventCtx }) {
             />
           )}
           {!event.ended_at && ctx.settings?.rewards_qr && (
-            <Button title="Dino's rewards QR" icon="qr-code-outline" size="sm" variant="secondary" onPress={() => router.push('/rewards' as Href)} />
+            <Button title="Rewards QR: 25% off concessions" icon="qr-code-outline" size="sm" variant="secondary" onPress={() => router.push('/rewards' as Href)} />
           )}
         </>
       ) : (

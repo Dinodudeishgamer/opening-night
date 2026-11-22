@@ -217,7 +217,7 @@ export default function YouScreen() {
             ? 'You stay signed in on this phone. Moving to a new one? Make yourself an invite code in Manage first, then enter it on the new phone.'
             : 'You stay signed in on this phone. For a new phone, ask Dino for a new invite code. Dino also sets names: ask him to fix yours.'}
         </ThemedText>
-        <Button title="Dino's Cinemark rewards QR" size="sm" variant="secondary" icon="qr-code-outline" onPress={() => router.push('/rewards' as Href)} />
+        <Button title="Dino's Cinemark Platinum Rewards" size="sm" variant="secondary" icon="qr-code-outline" onPress={() => router.push('/rewards' as Href)} />
         <Button title="Watch the welcome tour" size="sm" variant="secondary" icon="play-circle-outline" onPress={() => router.push('/intro?replay=1' as Href)} />
         <Button
           title="Sign out"
