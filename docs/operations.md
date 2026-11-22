@@ -68,6 +68,12 @@ An update only reaches builds with the same app version (`runtimeVersion` follow
 
 `src/constants/intro.ts` holds the address of the video in the welcome tour. While it is `null` the tour shows a "coming soon" card. Upload the video somewhere it can be streamed from, set the address, and send an update.
 
+### 8. Your rewards card
+
+The Rewards screen (on each movie night, on show day, and on the You tab) shows your Cinemark member QR so everyone buys on your account. The picture is kept in `app_settings`, which only signed-in members can read. It is never in this repository, which is public.
+
+To change it, crop the QR so it is square with nothing else in the picture, turn it into a `data:image/png;base64,...` string, and in the SQL editor run `update public.app_settings set rewards_qr = '<that string>', rewards_label = 'Cinemark Platinum Rewards';` (or ask Claude to do it). Setting `rewards_qr` to null hides the buttons.
+
 ## What is already deployed
 
 | | State |

@@ -4,7 +4,7 @@
 // under it; before that there is deliberately no date.
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
-import { useRouter } from 'expo-router';
+import { type Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { Linking, Platform, Pressable, StyleSheet, View } from 'react-native';
@@ -148,6 +148,9 @@ export function Hero({ ctx }: { ctx: EventCtx }) {
                 format: formatLabel(selected),
               }}
             />
+          )}
+          {!event.ended_at && ctx.settings?.rewards_qr && (
+            <Button title="Dino's rewards QR" icon="qr-code-outline" size="sm" variant="secondary" onPress={() => router.push('/rewards' as Href)} />
           )}
         </>
       ) : (

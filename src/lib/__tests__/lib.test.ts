@@ -8,7 +8,7 @@ import { ARRIVE_EARLY_MINUTES, arriveBy, DATE_LOCALE, dayTime, firstEmoji, isInv
 import { bySeat, isShowday, tidySeat } from '../seats.ts';
 import { inboxShows, inboxTarget } from '../inbox.ts';
 import { ANDROID_INSTALL_LINK, appleCashLink, letterboxdLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
-import { confirmationOpen, isPast, ownerNextStep, rsvpOpen, stageOf } from '../stage.ts';
+import { confirmationOpen, isPast, ownerNextStep, ratingOpen, rsvpOpen, stageOf } from '../stage.ts';
 import { eventStats, memberTotals, summarize, tiedNames, verdict } from '../stats.ts';
 
 const NOW = new Date('2026-10-05T12:00:00Z');
@@ -324,4 +324,11 @@ test('seats are tidied and sorted by row, larger numbers on the left', () => {
   // Tonight: C11 on the far left to C7 on the far right.
   const row = ['C7', 'C9', 'C11', 'C8', 'C10'].map((s) => ({ s }));
   assert.deepEqual(bySeat(row, (p) => p.s).map((p) => p.s), ['C11', 'C10', 'C9', 'C8', 'C7']);
+});
+
+test('rating opens when the night is ended, and locks 48 hours later', () => {
+  const now = new Date(2026, 10, 21, 23, 0);
+  assert.equal(ratingOpen({ ended_at: null }, now), false, 'checked in, movie still on');
+  assert.equal(ratingOpen({ ended_at: new Date(2026, 10, 21, 22, 0).toISOString() }, now), true);
+  assert.equal(ratingOpen({ ended_at: new Date(2026, 10, 19, 22, 0).toISOString() }, now), false, 'locked');
 });

@@ -452,7 +452,8 @@ export function RatingSection({ ctx }: { ctx: EventCtx }) {
   // You, then any guests you brought: whoever was checked in has a rating, and a guest's is yours to enter.
   const raters = ctx.mine.filter((person) => person.participant.checked_in_at);
 
-  if (raters.length === 0) return null;
+  // Nothing to rate until Dino ends the night, even for those already checked in.
+  if (raters.length === 0 || !event.ended_at) return null;
   const open = ratingOpen(event);
 
   if (!open) {

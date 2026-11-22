@@ -607,6 +607,8 @@ test('ratings: checked-in only, editable for 48 hours after the end, then locked
     await t.rpcFails(c.carol.uid, 'submit_rating', { p_event_id: s.event, p_score: 3.5 }, /checked in/);
     await t.rpcFails(c.alice.uid, 'submit_rating', { p_event_id: s.event, p_score: 3.775 }, /0\.00 to 5\.00/);
     await t.rpcFails(c.alice.uid, 'end_event', { p_event_id: s.event }, /Only the organizer/);
+    // Checked in is not enough: rating opens when Dino ends the night.
+    await t.rpcFails(c.alice.uid, 'submit_rating', { p_event_id: s.event, p_score: 3.5 }, /ends the night/);
 
     await t.rpc(c.owner.uid, 'end_event', { p_event_id: s.event });
     await t.rpc(c.alice.uid, 'submit_rating', { p_event_id: s.event, p_score: 0 });
@@ -634,6 +636,7 @@ test('a guest who was there is rated by their host, and counts like anyone else'
     const s = await watched(t, c);
     // Alice brought Gus: he walked in, which checks him in.
     const gus = await t.rpc(c.owner.uid, 'add_walk_in', { p_event_id: s.event, p_guest_name: 'Gus', p_host_member_id: c.alice.id });
+    await t.rpcFails(c.alice.uid, 'submit_guest_rating', { p_participant_id: gus, p_score: 2.5 }, /ends the night/);
     await t.rpc(c.owner.uid, 'end_event', { p_event_id: s.event });
     const asked = async (who: { uid: string }) => ((await t.rpc(who.uid, 'get_pending_actions')) as any[]).filter((a) => a.kind === 'rate').map((a) => a.participant_id).sort();
 

@@ -229,7 +229,7 @@ export async function listTheaters(): Promise<Theater[]> {
 }
 
 export async function getSettings(): Promise<AppSettings | null> {
-  const result = await supabase.from('app_settings').select('venmo_username, apple_cash_recipient, payment_note').maybeSingle();
+  const result = await supabase.from('app_settings').select('venmo_username, apple_cash_recipient, payment_note, rewards_label, rewards_qr').maybeSingle();
   if (result.error) throw toApiError(result.error);
   return result.data as AppSettings | null;
 }

@@ -43,8 +43,9 @@ export function confirmationOpen(event: Milestones, now: Date = new Date()): boo
   );
 }
 
+/** Rating opens when Dino ends the night, and locks 48 hours later. */
 export function ratingOpen(event: Pick<EventRow, 'ended_at'>, now: Date = new Date()): boolean {
-  return !isPast(event, now);
+  return event.ended_at !== null && !isPast(event, now);
 }
 
 export const STAGE_LABEL: Record<Stage, string> = {

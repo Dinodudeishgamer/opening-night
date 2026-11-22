@@ -75,6 +75,7 @@ function RootNavigation() {
       <Stack.Screen name="check-in/[id]" />
       <Stack.Screen name="new-event" />
       <Stack.Screen name="member/[id]" />
+      <Stack.Screen name="rewards" />
     </Stack>
   );
 }

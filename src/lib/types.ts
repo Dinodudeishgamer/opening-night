@@ -121,6 +121,10 @@ export interface AppSettings {
   venmo_username: string | null;
   apple_cash_recipient: string | null;
   payment_note: string | null;
+  /** "Cinemark Platinum Rewards": what the rewards card is called on its screen. */
+  rewards_label: string | null;
+  /** Dino's rewards QR, as a PNG data URI. */
+  rewards_qr: string | null;
 }
 
 export interface InboxItem {

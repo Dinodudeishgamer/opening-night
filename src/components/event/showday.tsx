@@ -2,6 +2,7 @@
 // one picture: when, when to be there, where, and who is sitting where.
 // Before that day, once the tickets are bought, Dino gets a card here to type
 // the seats in from the tickets. Members only ever see them on the day.
+import { type Href, useRouter } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
@@ -27,6 +28,7 @@ const coming = (person: Person) => person.participant.checked_in_at !== null || 
 
 export function ShowdaySection({ ctx }: { ctx: EventCtx }) {
   const { event, showtimes } = ctx.bundle;
+  const router = useRouter();
   const [editing, setEditing] = useState(false);
   const showtime = showtimes.find((entry) => entry.id === event.selected_showtime_id);
   if (!showtime || event.ended_at) return null;
@@ -94,6 +96,10 @@ export function ShowdaySection({ ctx }: { ctx: EventCtx }) {
         {!anySeats && <Text style={styles.soon}>Seats show up here once Dino adds them.</Text>}
         <Bulbs />
       </View>
+
+      {ctx.settings?.rewards_qr && (
+        <Button title="Buying snacks? Dino's rewards QR" icon="qr-code-outline" size="sm" onPress={() => router.push('/rewards' as Href)} />
+      )}
 
       {ctx.isOwner &&
         (editing ? (
