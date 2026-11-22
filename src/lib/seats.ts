@@ -16,10 +16,22 @@ export function tidySeat(raw: string): string | null {
   return seat === '' ? null : seat;
 }
 
-/** In seat order, row then number (F9 before F10); people without a seat last, in the order given. */
+/**
+ * In seat order as you look at the screen: row by row (C before D), and within
+ * a row from left to right. At our theater the numbers run high to low from
+ * the left (C11 on the far left, C7 on the far right), so the larger number
+ * comes first. People without a seat last, in the order given.
+ */
 export function bySeat<T>(items: T[], seatOf: (item: T) => string | null | undefined): T[] {
   const seated = items.filter((item) => seatOf(item));
   const unseated = items.filter((item) => !seatOf(item));
-  seated.sort((a, b) => seatOf(a)!.localeCompare(seatOf(b)!, 'en', { numeric: true, sensitivity: 'base' }));
+  seated.sort((a, b) => compareSeats(seatOf(a)!, seatOf(b)!));
   return [...seated, ...unseated];
+}
+
+function compareSeats(a: string, b: string): number {
+  const left = /^([A-Z]+)(\d+)$/.exec(a);
+  const right = /^([A-Z]+)(\d+)$/.exec(b);
+  if (left && right) return left[1].localeCompare(right[1]) || Number(right[2]) - Number(left[2]);
+  return a.localeCompare(b, 'en', { numeric: true, sensitivity: 'base' });
 }

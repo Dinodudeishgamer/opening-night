@@ -316,9 +316,12 @@ test('showday is the day of the showtime, until a few hours after it', () => {
   assert.equal(isShowday(new Date(2026, 10, 21, 13, 0).toISOString(), new Date(2026, 10, 21, 18, 0)), false, 'long over');
 });
 
-test('seats are tidied and sorted row then number', () => {
+test('seats are tidied and sorted by row, larger numbers on the left', () => {
   assert.equal(tidySeat(' f 12 '), 'F12');
   assert.equal(tidySeat('   '), null);
   const people = [{ n: 'a', s: 'F10' }, { n: 'b', s: null }, { n: 'c', s: 'F9' }, { n: 'd', s: 'E14' }];
-  assert.deepEqual(bySeat(people, (p) => p.s).map((p) => p.n), ['d', 'c', 'a', 'b']);
+  assert.deepEqual(bySeat(people, (p) => p.s).map((p) => p.n), ['d', 'a', 'c', 'b']);
+  // Tonight: C11 on the far left to C7 on the far right.
+  const row = ['C7', 'C9', 'C11', 'C8', 'C10'].map((s) => ({ s }));
+  assert.deepEqual(bySeat(row, (p) => p.s).map((p) => p.s), ['C11', 'C10', 'C9', 'C8', 'C7']);
 });
