@@ -5,7 +5,7 @@
 // checks, in the database, that the caller is the organizer.
 import { type Href, useRouter } from 'expo-router';
 import { Children, type ReactNode, useEffect, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import type { EventCtx, Person } from '@/components/event/context';
 import { ShowtimeLine } from '@/components/event/member-sections';
@@ -15,11 +15,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardTitle } from '@/components/ui/card';
 import { Chip } from '@/components/ui/chip';
 import { DateTimeField } from '@/components/ui/datetime-field';
+import { ImageChoices } from '@/components/ui/image-choices';
 import { Choices, Fact, Row, ScoreField, Sheet, useAction } from '@/components/ui/kit';
 import { StatusBadge } from '@/components/ui/status-badge';
 import { TextField } from '@/components/ui/text-field';
 import { MONO_FONT, Spacing } from '@/constants/theme';
-import { actions, issueInvite, listTheaters, owner, type ShowtimeInput } from '@/lib/api';
+import { actions, issueInvite, listTheaters, movieDetails, owner, type ShowtimeInput } from '@/lib/api';
 import { confirmAction, shareText, showAlert } from '@/lib/dialogs';
 import { CONFIRMATION_LABEL, dayTime, FORMAT_LABEL, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, weekdayTime } from '@/lib/format';
 import { removeEventFiles } from '@/lib/images';
@@ -230,7 +231,7 @@ export function OwnerPanel({ ctx, person, onClosePerson }: { ctx: EventCtx; pers
       )}
 
       <Actions>
-        <Button title="Edit details" size="sm" variant="secondary" icon="create-outline" onPress={() => setEditing(true)} />
+        <Button title="Edit details & pictures" size="sm" variant="secondary" icon="create-outline" onPress={() => setEditing(true)} />
         {!event.ended_at && <Button title="Answer for someone" size="sm" variant="secondary" icon="person-outline" onPress={() => setAnswering(true)} />}
         <Button title="Delete event" size="sm" variant="destructiveOutline" onPress={deleteEvent} />
       </Actions>
@@ -371,6 +372,12 @@ function EditSheet({ ctx, visible, onClose }: { ctx: EventCtx; visible: boolean;
   const [description, setDescription] = useState('');
   const [note, setNote] = useState('');
   const [deadline, setDeadline] = useState(new Date());
+  // The pictures: what the night shows now, and TMDB's other posters and backdrops to swap in.
+  const currentPoster = event.poster_path ?? event.movie.poster_path;
+  const currentBackdrop = event.backdrop_path ?? event.movie.backdrop_path;
+  const [poster, setPoster] = useState<string | null>(null);
+  const [backdrop, setBackdrop] = useState<string | null>(null);
+  const [art, setArt] = useState<{ posters: string[]; backdrops: string[] } | 'loading' | 'failed'>('loading');
   const { busy, run } = useAction(ctx.refresh);
   const canMoveDeadline = !event.selected_showtime_id && !event.ended_at;
 
@@ -380,11 +387,31 @@ function EditSheet({ ctx, visible, onClose }: { ctx: EventCtx; visible: boolean;
     setDescription(event.description_override ?? '');
     setNote(event.owner_note ?? '');
     setDeadline(new Date(event.rsvp_deadline));
-  }, [visible, event]);
+    setPoster(currentPoster);
+    setBackdrop(currentBackdrop);
+  }, [visible, event, currentPoster, currentBackdrop]);
+
+  // Fetched each time the sheet opens; the current pictures always lead the strips.
+  const tmdbId = event.movie.tmdb_id;
+  useEffect(() => {
+    if (!visible) return;
+    if (!tmdbId) return setArt('failed');
+    let live = true;
+    setArt('loading');
+    movieDetails(tmdbId)
+      .then((loaded) => live && setArt({ posters: loaded.posters, backdrops: loaded.backdrops }))
+      .catch(() => live && setArt('failed'));
+    return () => {
+      live = false;
+    };
+  }, [visible, tmdbId]);
+  const lead = (current: string | null, paths: string[]) => (current ? [current, ...paths.filter((path) => path !== current)] : paths);
 
   const save = async () => {
     const patch: Record<string, unknown> = { title_override: title, description_override: description, owner_note: note };
     if (canMoveDeadline && deadline.toISOString() !== new Date(event.rsvp_deadline).toISOString()) patch.rsvp_deadline = deadline.toISOString();
+    if (poster && poster !== currentPoster) patch.poster_path = poster;
+    if (backdrop && backdrop !== currentBackdrop) patch.backdrop_path = backdrop;
     if (await run('save', () => owner.updateEvent(event.id, patch))) onClose();
   };
 
@@ -394,6 +421,18 @@ function EditSheet({ ctx, visible, onClose }: { ctx: EventCtx; visible: boolean;
       <TextField label="Description (leave empty to use TMDB's)" value={description} onChangeText={setDescription} multiline maxLength={4000} />
       <TextField label="Dino's Note" value={note} onChangeText={setNote} multiline maxLength={2000} placeholder="Anything the group should know." />
       {canMoveDeadline && <DateTimeField label="RSVP deadline" value={deadline} onChange={setDeadline} />}
+      {art === 'loading' ? (
+        <ActivityIndicator />
+      ) : art === 'failed' ? (
+        <Fact icon="image-outline" text="Could not load other posters right now. Try again in a bit." />
+      ) : (
+        <>
+          <ThemedText type="smallBold">Poster</ThemedText>
+          <ImageChoices paths={lead(currentPoster, art.posters)} selected={poster} onSelect={setPoster} width={78} height={117} size="w185" />
+          <ThemedText type="smallBold">Backdrop</ThemedText>
+          <ImageChoices paths={lead(currentBackdrop, art.backdrops)} selected={backdrop} onSelect={setBackdrop} width={176} height={99} size="w342" />
+        </>
+      )}
       <Button title="Save" onPress={save} loading={busy === 'save'} />
     </Sheet>
   );

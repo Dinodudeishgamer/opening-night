@@ -4,10 +4,9 @@
 // choose the poster and backdrop, optionally reword the title and description
 // and add a note, and set the RSVP deadline. No date or time is asked for
 // here: a movie night gets those when a showtime is selected.
-import { Image } from 'expo-image';
 import { type Href, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { ThemedText } from '@/components/themed-text';
 import { BackHeader } from '@/components/ui/back-header';
@@ -16,15 +15,15 @@ import { Card, CardTitle } from '@/components/ui/card';
 import { DateTimeField } from '@/components/ui/datetime-field';
 import { EmptyState } from '@/components/ui/empty-state';
 import { Choices, Row, useAction } from '@/components/ui/kit';
+import { ImageChoices } from '@/components/ui/image-choices';
 import { Poster } from '@/components/ui/poster';
 import { Screen } from '@/components/ui/screen';
 import { StatusNote } from '@/components/ui/status-note';
 import { TextField } from '@/components/ui/text-field';
-import { type Note, Radius, Spacing } from '@/constants/theme';
+import { type Note, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
 import { messageOf, movieDetails, owner, searchMovies } from '@/lib/api';
 import { showAlert } from '@/lib/dialogs';
-import { tmdbImage } from '@/lib/format';
 import { useSession } from '@/lib/session';
 import type { TmdbDetails, TmdbSummary } from '@/lib/types';
 
@@ -229,40 +228,8 @@ export default function NewEventScreen() {
   );
 }
 
-function ImageChoices({
-  paths, selected, onSelect, width, height, size,
-}: {
-  paths: string[];
-  selected: string | null;
-  onSelect: (path: string) => void;
-  width: number;
-  height: number;
-  size: 'w185' | 'w342';
-}) {
-  const theme = useTheme();
-  return (
-    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.images}>
-      {paths.map((path) => {
-        const uri = tmdbImage(path, size);
-        if (!uri) return null;
-        const on = path === selected;
-        return (
-          <Pressable key={path} onPress={() => onSelect(path)} accessibilityRole="imagebutton" accessibilityState={{ selected: on }}>
-            <Image
-              source={{ uri }}
-              style={{ width, height, borderRadius: Radius.sm, borderWidth: on ? 3 : StyleSheet.hairlineWidth, borderColor: on ? theme.accent : theme.border, opacity: on ? 1 : 0.75 }}
-              contentFit="cover"
-              transition={150}
-            />
-          </Pressable>
-        );
-      })}
-    </ScrollView>
-  );
-}
 
 const styles = StyleSheet.create({
   picked: { flexDirection: 'row', gap: Spacing.three },
   pickedText: { flex: 1, gap: Spacing.two, justifyContent: 'center' },
-  images: { gap: Spacing.two },
 });
