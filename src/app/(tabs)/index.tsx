@@ -15,7 +15,8 @@ import { EmptyState } from '@/components/ui/empty-state';
 import { SectionHeader } from '@/components/ui/section';
 import { Font, Spacing } from '@/constants/theme';
 import { useTheme } from '@/hooks/use-theme';
-import { getPendingActions, listEvents, listParticipants, listSelectedShowtimes } from '@/lib/api';
+import { getPendingActions, listEvents, listParticipants, listSelectedShowtimes, listShowtimeOptions } from '@/lib/api';
+import { happensAt, soonestFirst } from '@/lib/order';
 import { useSession } from '@/lib/session';
 import type { EventRow, Participant, PendingAction, Showtime } from '@/lib/types';
 import { refreshUnread } from '@/lib/unread';
@@ -39,6 +40,7 @@ export default function ComingSoonScreen() {
   const { me, isOwner } = useSession();
   const [events, setEvents] = useState<EventRow[] | null>(null);
   const [showtimes, setShowtimes] = useState<Record<string, Showtime>>({});
+  const [options, setOptions] = useState<Record<string, string[]>>({});
   const [needs, setNeeds] = useState<Need[]>([]);
   const [crowds, setCrowds] = useState<Record<string, Participant[]>>({});
   const [refreshing, setRefreshing] = useState(false);
@@ -47,7 +49,13 @@ export default function ComingSoonScreen() {
   const load = useCallback(async () => {
     try {
       const [all, pending] = await Promise.all([listEvents(), getPendingActions()]);
-      setShowtimes(await listSelectedShowtimes(all));
+      const open = all.filter((event) => !event.ended_at);
+      const [picked, offered] = await Promise.all([
+        listSelectedShowtimes(all),
+        listShowtimeOptions(open.filter((event) => !event.selected_showtime_id).map((event) => event.id)),
+      ]);
+      setShowtimes(picked);
+      setOptions(offered);
       setEvents(all);
       setNeeds(group(pending));
       setFailed(false);
@@ -75,13 +83,14 @@ export default function ComingSoonScreen() {
 
   const byId = new Map((events ?? []).map((event) => [event.id, event]));
   const upcoming = (events ?? []).filter((event) => !event.ended_at);
-  // Nights with a date, soonest first; then the ones still being planned, by whose RSVP closes first.
-  const scheduled = upcoming
-    .filter((event) => showtimes[event.id])
-    .sort((a, b) => showtimes[a.id].starts_at.localeCompare(showtimes[b.id].starts_at));
-  const planning = upcoming.filter((event) => !showtimes[event.id]).sort((a, b) => a.rsvp_deadline.localeCompare(b.rsvp_deadline));
-  // The marquee goes to the next night with a date, or failing that the first one in the works.
-  const featured = scheduled[0] ?? planning[0];
+  // Soonest first everywhere: a night with a picked showtime by that showtime, one still being
+  // planned by its first showtime option (Doomsday in December comes after Rocky this weekend,
+  // whatever their RSVP deadlines say).
+  const when = (event: EventRow) => happensAt(showtimes[event.id]?.starts_at, options[event.id] ?? []);
+  const scheduled = soonestFirst(upcoming.filter((event) => showtimes[event.id]), when);
+  const planning = soonestFirst(upcoming.filter((event) => !showtimes[event.id]), when);
+  // The marquee goes to whichever night comes first, picked showtime or not.
+  const featured = soonestFirst(upcoming, when)[0];
   const laterScheduled = scheduled.filter((event) => event !== featured);
   const laterPlanning = planning.filter((event) => event !== featured);
 

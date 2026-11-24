@@ -6,6 +6,7 @@ import { test } from 'node:test';
 
 import { ARRIVE_EARLY_MINUTES, arriveBy, DATE_LOCALE, dayTime, firstEmoji, isInviteCodeComplete, memberName, money, parseMoney, parseScore, score, timeUntil, tmdbImage, formatLabel } from '../format.ts';
 import { bySeat, isShowday, tidySeat } from '../seats.ts';
+import { happensAt, soonestFirst } from '../order.ts';
 import { inboxShows, inboxTarget } from '../inbox.ts';
 import { ANDROID_INSTALL_LINK, appleCashLink, letterboxdLink, calendarEnd, calendarLocation, calendarNotes, INSTALL_LINK, inviteMessage, mapsLink, trailerLink, venmoLinks } from '../links.ts';
 import { confirmationOpen, isPast, ownerNextStep, ratingOpen, rsvpOpen, stageOf } from '../stage.ts';
@@ -331,4 +332,18 @@ test('rating opens when the night is ended, and locks 48 hours later', () => {
   assert.equal(ratingOpen({ ended_at: null }, now), false, 'checked in, movie still on');
   assert.equal(ratingOpen({ ended_at: new Date(2026, 10, 21, 22, 0).toISOString() }, now), true);
   assert.equal(ratingOpen({ ended_at: new Date(2026, 10, 19, 22, 0).toISOString() }, now), false, 'locked');
+});
+
+test('Coming Soon is soonest first, by when a night happens', () => {
+  const now = new Date('2026-11-24T18:00:00Z');
+  assert.equal(happensAt('2026-12-01T01:00:00Z', ['2026-11-28T17:00:00Z'], now), '2026-12-01T01:00:00Z', 'a picked showtime wins');
+  assert.equal(happensAt(undefined, ['2026-11-30T22:30:00Z', '2026-11-28T17:00:00Z', '2026-11-20T01:00:00Z'], now), '2026-11-28T17:00:00Z', 'first option still to come');
+  assert.equal(happensAt(undefined, [], now), null);
+  const nights = [
+    { id: 'doomsday', rsvp_deadline: '2026-11-25T05:59:00Z', at: '2026-12-18T04:10:00Z' },
+    { id: 'hexed', rsvp_deadline: '2026-11-30T02:00:00Z', at: '2026-12-05T00:00:00Z' },
+    { id: 'tba', rsvp_deadline: '2026-11-26T00:00:00Z', at: null },
+    { id: 'cliff', rsvp_deadline: '2026-11-26T03:00:00Z', at: '2026-11-28T17:00:00Z' },
+  ];
+  assert.deepEqual(soonestFirst(nights, (n) => n.at).map((n) => n.id), ['cliff', 'hexed', 'doomsday', 'tba']);
 });

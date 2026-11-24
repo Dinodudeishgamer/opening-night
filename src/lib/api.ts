@@ -131,6 +131,17 @@ export async function listSelectedShowtimes(events: EventRow[]): Promise<Record<
   return Object.fromEntries(list.map((showtime) => [showtime.event_id, showtime]));
 }
 
+/** Every showtime option still on offer for these events, keyed by event id: for ordering nights still being planned. */
+export async function listShowtimeOptions(eventIds: string[]): Promise<Record<string, string[]>> {
+  if (eventIds.length === 0) return {};
+  const list = rows<{ event_id: string; starts_at: string }>(
+    await supabase.from('showtimes').select('event_id, starts_at').in('event_id', eventIds).is('removed_at', null),
+  );
+  const byEvent: Record<string, string[]> = {};
+  for (const row of list) (byEvent[row.event_id] ??= []).push(row.starts_at);
+  return byEvent;
+}
+
 /** Who is on each of these events, as far as the caller may see, keyed by event id. */
 export async function listParticipants(eventIds: string[]): Promise<Record<string, Participant[]>> {
   if (eventIds.length === 0) return {};
